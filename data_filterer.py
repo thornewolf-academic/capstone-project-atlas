@@ -1,0 +1,2 @@
+class DataFilterer:
+    pass
