@@ -9,6 +9,7 @@ class UpdateSignal(Enum):
 class Subscribable:
     def __init__(self):
         self.subscribers = []
+        super().__init__()
     def add_subscriber(self, subscriber):
         self.subscribers.append(subscriber)
     def signal_subscribers(self, signal: UpdateSignal, data=None):
@@ -17,7 +18,8 @@ class Subscribable:
 
 class Subscriber:
     def __init__(self):
-        pass
+        super().__init__()
+
     def signal(self, signal: UpdateSignal, data=None):
         return signal
 

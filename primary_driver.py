@@ -6,7 +6,6 @@ from real_time_visualizer import RealTimeVisualizer
 from data_filterer import DataFilterer
 from mesh_generator import MeshGenerator
 
-SENSOR_DATA_FILE_NAME = ''
 POINT_CLOUD_FILE_NAME = ''
 FILTERED_POINT_CLOUD_FILE_NAME = ''
 MESH_FILE_NAME = ''
@@ -15,7 +14,7 @@ def main():
     logger = logging.Logger('primary_driver', level=logging.INFO)
 
     sensor_watcher = SensorWatcher()
-    point_cloud_generator = PointCloudGenerator(SENSOR_DATA_FILE_NAME, POINT_CLOUD_FILE_NAME)
+    point_cloud_generator = PointCloudGenerator(POINT_CLOUD_FILE_NAME)
     real_time_visualizer = RealTimeVisualizer()
 
     sensor_watcher.add_subscriber(point_cloud_generator)
