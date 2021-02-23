@@ -11,12 +11,18 @@ class Subscribable:
         self.subscribers = []
     def add_subscriber(self, subscriber):
         self.subscribers.append(subscriber)
-    def signal_subscribers(self, signal: UpdateSignal):
+    def signal_subscribers(self, signal: UpdateSignal, data=None):
         for subscriber in self.subscribers:
-            subscriber.signal(signal)
+            subscriber.signal(signal, data=data)
 
 class Subscriber:
     def __init__(self):
         pass
-    def signal(self, signal: UpdateSignal):
+    def signal(self, signal: UpdateSignal, data=None):
         return signal
+
+class SYSTEM_STATES:
+    NULL = 'NULL'
+    LOCALIZE = 'LOCALIZE'
+    SCAN = 'SCAN'
+    RESET = 'RESET'
