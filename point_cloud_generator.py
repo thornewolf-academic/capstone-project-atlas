@@ -5,13 +5,13 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import uncertainties
+import time
 from uncertainties import umath
 from uncertainties import unumpy as unp
 
 from utilities import SYSTEM_STATES, Subscribable, Subscriber, UpdateSignal
 
-STEPS_PER_ROTATION = 200
-EACH_DIST = 5
+STEPS_PER_ROTATION = 3200
 LIDAR_UNCERT = 0.025
 
 class PointCloudGenerator(Subscribable, Subscriber):
@@ -25,6 +25,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         self.target_locations = defaultdict(lambda: defaultdict(tuple))
         self.scan_locations = defaultdict(list)
         self.iteration = None
+        self.last_save = time.time()
 
     def signal(self, signal: UpdateSignal, data=None):
         if signal == UpdateSignal.NEW_DATA:
@@ -47,7 +48,10 @@ class PointCloudGenerator(Subscribable, Subscriber):
             self.scan_locations[state_iteration].append(
                 self.measurement_to_location(measurement)
             )
-            self.save_scan()
+            if time.time() - self.last_save > 1:
+                self.save_scan()
+                self.last_save = time.time()
+
             self.signal_subscribers(UpdateSignal.NEW_DATA)
 
     def measurement_to_location(self, measurement):
@@ -71,8 +75,9 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
     def save_scan(self):
         locs = []
-        for iteration in gen.scan_locations.keys():
-            locs += gen.scan_locations[iteration]
+        for iteration in self.scan_locations.keys():
+            locs += self.scan_locations[iteration]
+        print(len(locs))
         locs = np.array(locs)
         locs = np.squeeze(locs, axis=(1,))
         locs = unp.nominal_values(locs)
@@ -101,7 +106,7 @@ def rotation_matrix_from(A, B):
     return R
 
 def measurement_to_xyz(measurement):
-    dist, theta_step, phi_step = measurement
+    theta_step, phi_step, dist = measurement
     dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
     theta_step = uncertainties.ufloat(theta_step, 0.05)
     phi_step = uncertainties.ufloat(phi_step, 0.05)
