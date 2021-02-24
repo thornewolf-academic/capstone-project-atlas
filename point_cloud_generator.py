@@ -14,6 +14,7 @@ from utilities import SYSTEM_STATES, Subscribable, Subscriber, UpdateSignal
 STEPS_PER_ROTATION = 3200
 LIDAR_UNCERT = 0.025
 
+
 class PointCloudGenerator(Subscribable, Subscriber):
     def __init__(self, point_cloud_file_name):
         super().__init__()
@@ -31,7 +32,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         if signal == UpdateSignal.NEW_DATA:
             self.handle_new_data(data)
         return super().signal(signal, data=data)
-        
+
     def handle_new_data(self, data):
         system_state = data[0]
         if system_state == SYSTEM_STATES.LOCALIZE:
@@ -56,7 +57,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
     def measurement_to_location(self, measurement):
         R = self.generate_rotation_matrix()
-        relative_location = np.matmul(R,measurement_to_xyz(measurement))
+        relative_location = np.matmul(R, measurement_to_xyz(measurement))
         inertial_location = self.my_locations[self.iteration] + relative_location
         return inertial_location
 
@@ -67,10 +68,10 @@ class PointCloudGenerator(Subscribable, Subscriber):
         t2 = targets[2]
         p1 = measurement_to_xyz(t1)
         p2 = measurement_to_xyz(t2)
-        xax = np.reshape(unp.uarray([1,0,0], [0.0,0.0,0.0]), (3,))
-        p2p1 = p2-p1
+        xax = np.reshape(unp.uarray([1, 0, 0], [0.0, 0.0, 0.0]), (3,))
+        p2p1 = p2 - p1
         R = rotation_matrix_from(p2p1, xax)
-        self.my_locations[self.iteration] = np.matmul(R,-p1.copy())
+        self.my_locations[self.iteration] = np.matmul(R, -p1.copy())
         return R
 
     def save_scan(self):
@@ -81,11 +82,12 @@ class PointCloudGenerator(Subscribable, Subscriber):
         locs = np.array(locs)
         locs = np.squeeze(locs, axis=(1,))
         locs = unp.nominal_values(locs)
-        np.save(self.point_cloud_file_name,locs)
+        np.save(self.point_cloud_file_name, locs)
 
 
 def unorm(v):
-    return (v[0]**2+v[1]**2+v[2]**2)**0.5
+    return (v[0] ** 2 + v[1] ** 2 + v[2] ** 2) ** 0.5
+
 
 def rotation_matrix_from(A, B):
     A = A / unorm(A)
@@ -95,36 +97,39 @@ def rotation_matrix_from(A, B):
     s = unorm(v)
     c = np.dot(A, B)
 
-    ssm = np.array([
-        [0, -v[2], v[1]],
-        [v[2], 0, -v[0]],
-        [-v[1], v[0], 0]
-    ])
+    ssm = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
 
-    R = np.eye(3) + ssm + np.matmul(ssm, ssm) / (1+c)
+    R = np.eye(3) + ssm + np.matmul(ssm, ssm) / (1 + c)
     R = unp.matrix(R)
     return R
+
 
 def measurement_to_xyz(measurement):
     theta_step, phi_step, dist = measurement
     dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
     theta_step = uncertainties.ufloat(theta_step, 0.05)
     phi_step = uncertainties.ufloat(phi_step, 0.05)
-    return np.array([
-        dist * umath.cos(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180) * umath.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
-        dist * umath.sin(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180) * umath.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
-        dist * umath.sin(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
-        ])
+    return np.array(
+        [
+            dist
+            * umath.cos(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
+            * umath.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
+            dist
+            * umath.sin(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
+            * umath.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
+            dist * umath.sin(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
+        ]
+    )
 
 
-if __name__ == '__main__':
-    gen = PointCloudGenerator('temp')
-    t1 = ('LOCALIZE', 1, 1, 0, 0, 0)
-    t2 = ('LOCALIZE', 1, 2, 10, 0, 0)
-    
+if __name__ == "__main__":
+    gen = PointCloudGenerator("temp")
+    t1 = ("LOCALIZE", 1, 1, 0, 0, 0)
+    t2 = ("LOCALIZE", 1, 2, 10, 0, 0)
+
     (gen.signal(UpdateSignal.NEW_DATA, t1))
     (gen.signal(UpdateSignal.NEW_DATA, t2))
-    p1 = ('SCAN', 1, 5, 0, 50)
+    p1 = ("SCAN", 1, 5, 0, 50)
     (gen.signal(UpdateSignal.NEW_DATA, p1))
     (gen.signal(UpdateSignal.NEW_DATA, p1))
 
