@@ -12,7 +12,7 @@ from uncertainties import unumpy as unp
 from utilities import SYSTEM_STATES, Subscribable, Subscriber, UpdateSignal
 
 STEPS_PER_ROTATION = 3200
-LIDAR_UNCERT = 0.025
+LIDAR_UNCERT = 0.05
 
 
 class PointCloudGenerator(Subscribable, Subscriber):
@@ -70,6 +70,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         p2 = measurement_to_xyz(t2)
         xax = np.reshape(unp.uarray([1, 0, 0], [0.0, 0.0, 0.0]), (3,))
         p2p1 = p2 - p1
+        print("Target delta:", p2p1)
         R = rotation_matrix_from(p2p1, xax)
         self.my_locations[self.iteration] = np.matmul(R, -p1.copy())
         return R
