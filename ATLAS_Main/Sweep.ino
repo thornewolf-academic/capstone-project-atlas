@@ -6,7 +6,7 @@ int end_distance = 5; //Largest ring radius (m)
 float sensor_height = 1.2; //approximate height of the lidar - best to have this higher than it actually is (m)
 float distance_between_points = 10; //Space between rings (cm)
 
-int number_of_rings = 1;//(end_distance-sensor_height*cos(start_angle*PI/180))*100/distance_between_points; //number of rings to scan. Can adjust the last number to adjust spacing between rings
+int number_of_rings = (end_distance-sensor_height*cos(start_angle*PI/180))*100/distance_between_points; //number of rings to scan. Can adjust the last number to adjust spacing between rings
 float L = sensor_height/tan(PI/180*start_angle);
 
 //Bring sensor down to the set angle of depression
@@ -22,6 +22,9 @@ float L = sensor_height/tan(PI/180*start_angle);
    scanFile.print("SCAN,");
    scanFile.println(pos);
    scanFile.close();
+
+   Serial.print("SCAN,");
+   Serial.println(pos);
 
 //The scanning loop
 digitalWrite(PD,HIGH);
@@ -53,12 +56,12 @@ digitalWrite(PD,HIGH);
       scanFile = SD.open(fileName, FILE_WRITE);
       myLidarLite.waitForBusy();
       myLidarLite.takeRange();
-//      Serial.print(yawPos);
-//      Serial.print(",");
-//      Serial.print(pitchPos);
-//      Serial.print(",");
-//      myLidarLite.waitForBusy();
-//      Serial.println(myLidarLite.readDistance());
+      Serial.print(yawPos);
+      Serial.print(",");
+      Serial.print(pitchPos);
+      Serial.print(",");
+      myLidarLite.waitForBusy();
+      Serial.println(myLidarLite.readDistance());
       scanFile.print(yawPos);
       scanFile.print(",");
       scanFile.print(pitchPos);

@@ -109,7 +109,9 @@ while (buttonState == 1) {
         searchDelay = 0;
       }
       else {
-        search();
+        for (int p = 0; p < 10; p++) {
+          search();
+        }
       }
     }
   
@@ -119,9 +121,9 @@ while (buttonState == 1) {
       
       if ((pitch == 120) && (yaw == 160)) {
         ontarget++;
-        Serial.println(ontarget);
+        //Serial.println(ontarget);
       }
-      if ((pitch =! 120) && (yaw =! 160)) {
+      if ((pitch != 120) || (yaw != 160)) {
         ontarget = 0;
       }
       if (ontarget == 200) {
@@ -154,9 +156,8 @@ while (buttonState == 1) {
       
       if (((pitch == 120) && (yaw == 160))) {
         ontarget++;
-        Serial.println(ontarget);
       }
-      if ((pitch =! 120) && (yaw =! 160)) {
+      if ((pitch != 120) || (yaw != 160)) {
         ontarget = 0;
       }
       if (ontarget == 200) {
@@ -188,13 +189,13 @@ if (dist1 != 0 && dist2 != 0) {
   search();
   dist1 = 0;
   dist2 = 0;
-  Serial.print("SCAN,");
-  Serial.println(pos);
-  Serial.println("0,0,0");
+  //Serial.print("SCAN,");
+  //Serial.println(pos);
+  //Serial.println("0,0,0");
   pos++;
-  Serial.print("LOCALIZE,");
-  Serial.println(pos);
-  //sweep();
+  //Serial.print("LOCALIZE,");
+  //Serial.println(pos);
+  sweep();
   scanFile = SD.open(fileName, FILE_WRITE);
   scanFile.print("LOCALIZE,");
   scanFile.println(pos);
@@ -203,13 +204,9 @@ if (dist1 != 0 && dist2 != 0) {
   buttonState = 0;
 }
 
+
   //roll over step count
-  if (yawPos >= 3200) {
-    yawPos = yawPos - 3200;
-  }
-  if (yawPos <= -1) {
-    yawPos = yawPos + 3200;
-  }
+  yawPos = yawPos % 3200;
 }
 }
 
