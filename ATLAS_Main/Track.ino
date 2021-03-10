@@ -1,47 +1,52 @@
- void track() {
+void track() {
 //x 0-320, y 0-240
+int yawSteps = 0;
+int pitchSteps = 0;
+int i = 0;
+int j = 0;
 
-//Serial.print("yaw: ");
-//Serial.print(yaw);
-//Serial.print(", pitch: ");
-//Serial.print(pitch);
+int Yp = 20;
+int Pp = 20;
 
-if (yaw>=162) {
+if (yaw>160) {
+  yawSteps = (yaw-160)/Yp+1;
   digitalWrite(YD,HIGH);
-  digitalWrite(YS,HIGH);
-  yawPos++;
+  yawPos = yawPos+yawSteps;
 }
-if (yaw<=158) {
+if (yaw<160) {
+  yawSteps = (160-yaw)/Yp+1;
   digitalWrite(YD,LOW);
-  digitalWrite(YS,HIGH);
-  yawPos--;
+  yawPos = yawPos-yawSteps;
 }
-if (pitch>=122) {
+if (pitch>120) {
+  pitchSteps = (pitch-120)/Pp+1;
   digitalWrite(PD,LOW);
-  digitalWrite(PS,HIGH);
-  pitchPos++;
+  pitchPos = pitchPos+pitchSteps;
 }
-if (pitch<=118) {
+if (pitch<120) {
+  pitchSteps = (120-pitch)/Pp+1;
   digitalWrite(PD,HIGH);
-  digitalWrite(PS,HIGH);
-  pitchPos--;
+  pitchPos = pitchPos-pitchSteps;
 }
 
-delayMicroseconds(Speed);
-digitalWrite(YS,LOW);
-digitalWrite(PS,LOW);
-delayMicroseconds(Speed);
-
-//Serial.print(" yaw: ");
-//Serial.print(yawSteps);
-//Serial.print(", pitch: ");
-//Serial.print(pitchSteps);
-
-  //roll over step count
-  if (yawPos >= 3200) {
-    yawPos = yawPos - 3200;
+while (i < yawSteps || j < pitchSteps){
+  if (i < yawSteps) {
+    digitalWrite(YS,HIGH);
+    i++;
   }
-  if (yawPos <= -1) {
-    yawPos = yawPos + 3200;
+  if (j < pitchSteps) {
+    digitalWrite(PS,HIGH);
+    j++;
   }
+  delayMicroseconds(Speed);
+  digitalWrite(YS,LOW);
+  digitalWrite(PS,LOW);
+  delayMicroseconds(Speed);
+}
+
+//Serial.print(yaw);
+//Serial.print(",");
+//Serial.println(pitch);
+
+yawPos = yawPos % 3200;
 }
