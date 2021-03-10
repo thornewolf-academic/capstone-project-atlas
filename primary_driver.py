@@ -16,7 +16,7 @@ def main():
 
     sensor_watcher = SensorWatcher()
     point_cloud_generator = PointCloudGenerator(POINT_CLOUD_FILE_NAME)
-    real_time_visualizer = RealTimeVisualizer()
+    real_time_visualizer = RealTimeVisualizer(POINT_CLOUD_FILE_NAME)
 
     sensor_watcher.add_subscriber(point_cloud_generator)
     point_cloud_generator.add_subscriber(real_time_visualizer)
