@@ -1,5 +1,3 @@
-import copy
-import itertools
 from collections import defaultdict
 
 import numpy as np
@@ -10,9 +8,16 @@ from uncertainties import umath
 from uncertainties import unumpy as unp
 
 from utilities import SYSTEM_STATES, Subscribable, Subscriber, UpdateSignal
+import logging
 
 STEPS_PER_ROTATION = 3200
 LIDAR_UNCERT = 0.05
+
+logging.basicConfig(filename="runs.log", level=logging.INFO)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+logger = logging.getLogger("point_cloud_generator").addHandler(ch)
 
 
 class PointCloudGenerator(Subscribable, Subscriber):
@@ -27,11 +32,16 @@ class PointCloudGenerator(Subscribable, Subscriber):
         self.scan_locations = defaultdict(list)
         self.iteration = None
         self.last_save = time.time()
+        self.finished = False
 
     def signal(self, signal: UpdateSignal, data=None):
         if signal == UpdateSignal.NEW_DATA:
             self.handle_new_data(data)
         return super().signal(signal, data=data)
+
+    def mark_finished(self):
+        self.save_scan()
+        self.finished = True
 
     def handle_new_data(self, data):
         system_state = data[0]
@@ -46,9 +56,9 @@ class PointCloudGenerator(Subscribable, Subscriber):
             self.iteration = state_iteration
             measurement = tuple(data[2:])
             self.scan_measurements[state_iteration].append(measurement)
-            self.scan_locations[state_iteration].append(
-                self.measurement_to_location(measurement)
-            )
+            location = self.measurement_to_location(measurement)
+            location = np.append(location, [[state_iteration]], axis=1)
+            self.scan_locations[state_iteration].append(location)
             if time.time() - self.last_save > 1:
                 self.save_scan()
                 self.last_save = time.time()
@@ -70,7 +80,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         p2 = measurement_to_xyz(t2)
         xax = np.reshape(unp.uarray([1, 0, 0], [0.0, 0.0, 0.0]), (3,))
         p2p1 = p2 - p1
-        print("Target delta:", p2p1)
+        logging.info(f"Target delta: {p2p1}")
         R = rotation_matrix_from(p2p1, xax)
         self.my_locations[self.iteration] = np.matmul(R, -p1.copy())
         return R
@@ -79,7 +89,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         locs = []
         for iteration in self.scan_locations.keys():
             locs += self.scan_locations[iteration]
-        print(len(locs))
+        logging.info(f"Total locations {len(locs)}")
         locs = np.array(locs)
         locs = np.squeeze(locs, axis=(1,))
         locs = unp.nominal_values(locs)
