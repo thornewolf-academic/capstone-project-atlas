@@ -6,9 +6,14 @@ from real_time_visualizer import RealTimeVisualizer
 from data_filterer import DataFilterer
 from mesh_generator import MeshGenerator
 
-POINT_CLOUD_FILE_NAME = ""
-FILTERED_POINT_CLOUD_FILE_NAME = ""
-MESH_FILE_NAME = ""
+# Comments are nominal values for Henry's machine
+# Values MUST be raw strings
+POINT_CLOUD_FILE_NAME = r""         #r"\TestMesh.xyz"
+POINT_CLOUD_FILE_LOCATION = r""     #r"C:\Users\Henry\PC_Input"
+MESH_FILE_NAME = r""                #r"\OutMesh.obj"
+MESH_FILE_LOCATION = r""            #r"C:\Users\Henry\PC_Output"
+SCRIPT_FILE_NAME = r""              #r"\BunnyPoisson.mlx"
+SCRIPT_FILE_LOCATION = r""          #r"C:\Users\Henry"
 
 
 def main():
