@@ -1,14 +1,18 @@
 from collections import defaultdict
+from re import A
 
 import numpy as np
+from numpy.core.fromnumeric import shape
 import pandas as pd
 import uncertainties
 import time
 from uncertainties import umath
 from uncertainties import unumpy as unp
 
+import itertools as it
 from utilities import SYSTEM_STATES, Subscribable, Subscriber, UpdateSignal
 import logging
+from typing import Union, List
 
 STEPS_PER_ROTATION = 3200
 LIDAR_UNCERT = 0.05
@@ -25,14 +29,20 @@ class PointCloudGenerator(Subscribable, Subscriber):
         super().__init__()
 
         self.point_cloud_file_name = point_cloud_file_name
-        self.target_measurements = defaultdict(lambda: defaultdict(tuple))
+        self.target_measurements = defaultdict(
+            lambda: defaultdict(lambda: defaultdict(lambda: None))
+        )
         self.scan_measurements = defaultdict(list)
         self.my_locations = defaultdict(tuple)
-        self.target_locations = defaultdict(lambda: defaultdict(tuple))
         self.scan_locations = defaultdict(list)
         self.iteration = None
         self.last_save = time.time()
         self.finished = False
+
+        self._target_locations = defaultdict(lambda: defaultdict(lambda: None))
+        self._rotation_matrices = defaultdict(lambda: None)
+        self._origin_target = None
+        self.targets_set = set()
 
     def signal(self, signal: UpdateSignal, data=None):
         if signal == UpdateSignal.NEW_DATA:
@@ -43,8 +53,9 @@ class PointCloudGenerator(Subscribable, Subscriber):
         self.save_scan()
         self.finished = True
 
-    def handle_new_data(self, data):
+    def handle_new_data(self, data: List[str]):
         system_state = data[0]
+
         if system_state == SYSTEM_STATES.LOCALIZE:
             state_iteration = data[1]
             self.iteration = state_iteration
@@ -54,36 +65,120 @@ class PointCloudGenerator(Subscribable, Subscriber):
         if system_state == SYSTEM_STATES.SCAN:
             state_iteration = data[1]
             self.iteration = state_iteration
+
+            # Insert measurement into raw measurements data structure
             measurement = tuple(data[2:])
             self.scan_measurements[state_iteration].append(measurement)
+
+            # Convert measurement to inertial location and store
             location = self.measurement_to_location(measurement)
             location = np.append(location, [[state_iteration]], axis=1)
             self.scan_locations[state_iteration].append(location)
-            if time.time() - self.last_save > 1:
+
+            # Hardcoded rate-limit on save frequency for performance
+            if time.time() - self.last_save > 2:
                 self.save_scan()
                 self.last_save = time.time()
 
             self.signal_subscribers(UpdateSignal.NEW_DATA)
 
     def measurement_to_location(self, measurement):
-        R = self.generate_rotation_matrix()
+        R = self.get_or_generate_rotation_matrix()
         relative_location = np.matmul(R, measurement_to_xyz(measurement))
         inertial_location = self.my_locations[self.iteration] + relative_location
         return inertial_location
 
-    def generate_rotation_matrix(self):
-        # TODO: handle multiple targets
-        targets = self.target_measurements[self.iteration]
-        t1 = targets[1]
-        t2 = targets[2]
-        p1 = measurement_to_xyz(t1)
-        p2 = measurement_to_xyz(t2)
-        xax = np.reshape(unp.uarray([1, 0, 0], [0.0, 0.0, 0.0]), (3,))
-        p2p1 = p2 - p1
-        logging.info(f"Target delta: {p2p1}")
-        R = rotation_matrix_from(p2p1, xax)
-        self.my_locations[self.iteration] = np.matmul(R, -p1.copy())
-        return R
+    def get_or_generate_rotation_matrix(self):
+        if self._rotation_matrices[self.iteration] is not None:
+            return self._rotation_matrices[self.iteration]
+
+        self.get_or_generate_target_locations()
+        return self._rotation_matrices[self.iteration]
+
+    @property
+    def target_locations(self):
+        return self.get_or_generate_target_locations()
+
+    def get_or_generate_target_locations(self):
+        if len(self._target_locations[self.iteration]) > 0:
+            return self._target_locations
+
+        target_measurements = self.target_measurements[self.iteration]
+
+        # # Align all targets as according to origin target.
+        # if self._origin_target is None:
+        #     self._origin_target = min(target_measurements)
+
+        relative_locations = {
+            tid: measurement_to_xyz(measurment)
+            for tid, measurment in target_measurements.items()
+        }
+
+        # Keep track of all targets we have ever seen
+        for tid in target_measurements.keys():
+            self.targets_set.add(tid)
+
+        # Determine what two targets we have enough information on to make calculations on.
+        # We need to know what their locations were last iteration and what they are this iteration.
+        target_1 = None
+        target_2 = None
+        for ct1, ct2 in it.combinations(self.targets_set, r=2):
+            if (
+                ct1 in self._target_locations[self.iteration - 1]
+                and ct2 in self._target_locations[self.iteration - 1]
+                and ct1 in relative_locations
+                and ct2 in relative_locations
+            ):
+                target_1 = ct1
+                target_2 = ct2
+                break
+
+        if target_1 is None:
+            target_1, target_2 = sorted(target_measurements)[:2]
+            self._origin_target = target_1
+
+        measured_axis = relative_locations[target_2] - relative_locations[target_1]
+
+        if (
+            target_1 in self._target_locations[self.iteration - 1]
+            and target_2 in self._target_locations[self.iteration - 1]
+        ):
+            true_axis = (
+                self._target_locations[self.iteration - 1][target_2]
+                - self._target_locations[self.iteration - 1][target_1]
+            )
+        else:
+            true_axis = np.reshape(unp.uarray([1, 0, 0], [0.0, 0.0, 0.0]), (3,))
+
+        true_axis = np.reshape(true_axis, (3,))
+
+        R = rotation_matrix_from(measured_axis, true_axis)
+        self._rotation_matrices[self.iteration] = R
+
+        sensor_relative_location_to_origin = -relative_locations[target_1].copy()
+        self.my_locations[self.iteration] = sensor_relative_location_to_origin
+
+        inertial_locations = {
+            tid: np.asarray(np.matmul(R, measurement.copy()))
+            for tid, measurement in relative_locations.items()
+        }
+
+        inertial_offset = np.zeros((3,))
+        for tid in inertial_locations:
+            print(tid)
+            if tid in self._target_locations[self.iteration - 1]:
+                # print(inertial_locations[tid])
+                # print(self._target_locations[self.iteration - 1][tid])
+                inertial_offset = (
+                    inertial_locations[tid]
+                    - self._target_locations[self.iteration - 1][tid]
+                )
+                break
+
+        for tid, location in inertial_locations.items():
+            self._target_locations[self.iteration][tid] = location - inertial_offset
+
+        return self._target_locations
 
     def save_scan(self):
         locs = []
@@ -97,7 +192,9 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
 
 def unorm(v):
-    return (v[0] ** 2 + v[1] ** 2 + v[2] ** 2) ** 0.5
+    v = np.reshape(v, (3, 1))
+    mag = np.power(v[0] ** 2 + v[1] ** 2 + v[2] ** 2, 0.5)
+    return mag
 
 
 def rotation_matrix_from(A, B):
@@ -116,7 +213,11 @@ def rotation_matrix_from(A, B):
 
 
 def measurement_to_xyz(measurement):
-    theta_step, phi_step, dist = measurement
+    try:
+        theta_step, phi_step, dist = measurement
+    except Exception as e:
+        print("unpacking point failed")
+        return np.array([0, 0, 0])
     dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
     theta_step = uncertainties.ufloat(theta_step, 0.05)
     phi_step = uncertainties.ufloat(phi_step, 0.05)
@@ -131,23 +232,3 @@ def measurement_to_xyz(measurement):
             dist * umath.sin(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
         ]
     )
-
-
-if __name__ == "__main__":
-    gen = PointCloudGenerator("temp")
-    t1 = ("LOCALIZE", 1, 1, 0, 0, 0)
-    t2 = ("LOCALIZE", 1, 2, 10, 0, 0)
-
-    (gen.signal(UpdateSignal.NEW_DATA, t1))
-    (gen.signal(UpdateSignal.NEW_DATA, t2))
-    p1 = ("SCAN", 1, 5, 0, 50)
-    (gen.signal(UpdateSignal.NEW_DATA, p1))
-    (gen.signal(UpdateSignal.NEW_DATA, p1))
-
-    (gen.target_measurements)
-    (gen.scan_measurements)
-    (gen.my_locations[1])
-    locs = gen.scan_locations[1]
-    locs = np.array(locs)
-    locs = np.squeeze(locs, axis=(1,))
-    locs = unp.nominal_values(locs)

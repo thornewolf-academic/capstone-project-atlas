@@ -6,7 +6,7 @@ from point_cloud_normalizer import PointCloudNormalizer
 import matplotlib.pyplot as plt
 import numpy as np
 
-DATA_FILE = "scan 3.10.txt"
+DATA_FILE = "SCAN3.TXT"
 
 
 def post_process(gen, offset_recommendation=None):
@@ -31,11 +31,11 @@ PLOT = True
 def main():
     parser = BluetoothParser()
     gen = PointCloudGenerator(DATA_FILE + "_output")
-    with open(DATA_FILE, "r") as f:
+    with open(DATA_FILE, "rb") as f:
         data = f.read()
 
     for i, c in enumerate(data):
-        r = parser.add_data(c)
+        r = parser.add_data(bytes((c,)))
         if r is not None:
             gen.signal(UpdateSignal.NEW_DATA, r)
     gen.mark_finished()
@@ -48,7 +48,7 @@ def main():
         ax.scatter(point_cloud[:, 0], point_cloud[:, 1], point_cloud[:, 2])
         plt.show()
 
-    post_process(gen, offset_recommendation)
+    # post_process(gen, offset_recommendation)
 
 
 if __name__ == "__main__":
