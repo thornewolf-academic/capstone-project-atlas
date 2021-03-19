@@ -5,6 +5,7 @@ LIDARLite_v3HP myLidarLite;
 #define FAST_I2C
 #include <SPI.h>
 #include <SD.h>
+#include <AltSoftSerial.h>
 
 String fileName = "scan1.txt";
 
@@ -27,6 +28,7 @@ int pitchPos = 0;
 int flag = 0;
 float dist1 = 0;
 float dist2 = 0;
+float dist3 = 0;
 int ontarget = 0;
 int pos = 1;
 int searchDelay = 0;
@@ -37,12 +39,14 @@ char receivedChars[numChars];
 char tempChars[numChars]; 
 boolean newData = false; 
 const int chipSelect = 10; //for SD card
+AltSoftSerial camera;
 File scanFile;
 
 
 void setup() {
   Serial.begin(115200);
-  Serial1.begin(115200);
+  Serial1.begin(115200); //bluetooth
+  camera.begin(57600); //camera serial line
   pinMode(YS, OUTPUT);
   pinMode(YD, OUTPUT);
   pinMode(PS, OUTPUT);
@@ -69,11 +73,12 @@ void setup() {
   delay(3000);
 
   //Checks to ensure an SD card is inserted
-//  if (!SD.begin(chipSelect)) {
-//    Serial.println("Card failed, or not present");
-//    // don't do anything more:
-//    while (1);
-//  }
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Card failed, or not present");
+    Serial1.println("Card failed, or not present");
+    // don't do anything more:
+    while (1);
+  }
   Serial.println("sd card ok");
   Startup();
   delay(1000);
@@ -83,11 +88,14 @@ void setup() {
     scanFile.close();
     Serial.print("LOCALIZE,");
     Serial.println(pos);
+    Serial1.print("LOCALIZE,");
+    Serial1.println(pos);
 }
 
 void loop() {
 
 if (digitalRead(button) == 0) {
+  //Serial.println("button has been pressed");
   buttonState = 1;
 }
 
@@ -98,12 +106,15 @@ while (buttonState == 1) {
   if (newData == true) {
     strcpy(tempChars, receivedChars);
     // this temporary copy is necessary to protect the original data
-    //   because strtok() used in parseData() replaces the commas with \0
+    //   because strtok() used in parseData() replaces the commas with 
+    Serial.println(tempChars);
     parseData();
     //showParsedData();
     newData = false;
+    //Serial.println(flag);
     
-    if ((flag == 0) || (flag == 1 && dist1 != 0) || (flag == 2 && dist2 !=0)) {
+    if ((flag == 0) || (flag == 1 && dist1 != 0) || (flag == 2 && dist2 !=0) || (flag == 3 && dist3 != 0)) {
+      //Serial.println("sees beacon 3");
       if (searchDelay == 1) {
         delay(500);
         searchDelay = 0;
@@ -118,15 +129,15 @@ while (buttonState == 1) {
     if (flag == 1 && dist1 == 0) {
       int searchDelay = 1;
       track();
+      Serial.println("sees beacon 1");
       
       if ((pitch == 120) && (yaw == 160)) {
         ontarget++;
-        //Serial.println(ontarget);
       }
       if ((pitch != 120) || (yaw != 160)) {
         ontarget = 0;
       }
-      if (ontarget == 200) {
+      if (ontarget == 50) {
         dist1 = lidar();
         int PS1 = pitchPos;
         int YS1 = yawPos;
@@ -138,6 +149,13 @@ while (buttonState == 1) {
         Serial.print(PS1);
         Serial.print(",");
         Serial.println(dist1);
+        
+        Serial1.print("1,");
+        Serial1.print(YS1);
+        Serial1.print(",");
+        Serial1.print(PS1);
+        Serial1.print(",");
+        Serial1.println(dist1);
     
         scanFile = SD.open(fileName, FILE_WRITE);
         scanFile.print("1,");
@@ -160,7 +178,7 @@ while (buttonState == 1) {
       if ((pitch != 120) || (yaw != 160)) {
         ontarget = 0;
       }
-      if (ontarget == 200) {
+      if (ontarget == 50) {
         dist2 = lidar();
         int PS2 = pitchPos;
         int YS2 = yawPos;
@@ -172,6 +190,13 @@ while (buttonState == 1) {
         Serial.print(PS2);
         Serial.print(",");
         Serial.println(dist2);
+
+        Serial1.print("2,");
+        Serial1.print(YS2);
+        Serial1.print(",");
+        Serial1.print(PS2);
+        Serial1.print(",");
+        Serial1.println(dist2);
     
         scanFile = SD.open(fileName, FILE_WRITE);
         scanFile.print("2,");
@@ -183,19 +208,76 @@ while (buttonState == 1) {
         scanFile.close();
       }
     }
+
+    if (flag == 3 && dist3 == 0) {
+      track();
+      int searchDelay = 1;
+      
+      if (((pitch == 120) && (yaw == 160))) {
+        ontarget++;
+      }
+      if ((pitch != 120) || (yaw != 160)) {
+        ontarget = 0;
+      }
+      if (ontarget == 50) {
+        dist3 = lidar();
+        int PS3 = pitchPos;
+        int YS3 = yawPos;
+        ontarget = 0;
+        
+        Serial.print("3,");
+        Serial.print(YS3);
+        Serial.print(",");
+        Serial.print(PS3);
+        Serial.print(",");
+        Serial.println(dist3);
+
+        Serial1.print("3,");
+        Serial1.print(YS3);
+        Serial1.print(",");
+        Serial1.print(PS3);
+        Serial1.print(",");
+        Serial1.println(dist3);
+    
+        scanFile = SD.open(fileName, FILE_WRITE);
+        scanFile.print("3,");
+        scanFile.print(YS3);
+        scanFile.print(",");
+        scanFile.print(PS3);
+        scanFile.print(",");
+        scanFile.println(dist3);
+        scanFile.close();
+      }
+    }
   }
   
-if (dist1 != 0 && dist2 != 0) {
+if (dist1 != 0 && dist2 != 0 && dist3 != 0) {
   search();
   dist1 = 0;
   dist2 = 0;
-  //Serial.print("SCAN,");
-  //Serial.println(pos);
+  dist3 = 0;
+  
+  Serial.print("SCAN,");
+  Serial.println(pos);
+  
+  Serial1.print("SCAN,");
+  Serial1.println(pos);
+
+  scanFile = SD.open(fileName, FILE_WRITE);
+  scanFile.print("SCAN,");
+  scanFile.println(pos);
+  scanFile.close();
+  
   //Serial.println("0,0,0");
-  pos++;
-  //Serial.print("LOCALIZE,");
-  //Serial.println(pos);
   sweep();
+  pos++;
+  
+  Serial.print("LOCALIZE,");
+  Serial.println(pos);
+
+  Serial1.print("LOCALIZE,");
+  Serial1.println(pos);
+  
   scanFile = SD.open(fileName, FILE_WRITE);
   scanFile.print("LOCALIZE,");
   scanFile.println(pos);
