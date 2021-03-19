@@ -80,7 +80,7 @@ def FWOCFM(data):
                         b[j] = (fun[j] - B - x_pm[j])/(math.sqrt(2)*sig_m)
                         def integrand(X):
                                 return -X**2
-                        FW_m = (fun[j] - (Cv*(scipy.integrate.quad(integrand,a[j],b[j]))))
+                        FW_m = (fun[j] - np.int(1e12)*(Cv*(scipy.integrate.quad(integrand,a[j],b[j]))))
                         fuzz = FW_m[0]
                         fuzzies[j] = fuzz
         bar.finish()
