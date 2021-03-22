@@ -54,12 +54,12 @@ class RealTimeVisualizer(Subscriber):
                 x = self.data[:, 0]
                 y = self.data[:, 1]
                 z = self.data[:, 2]
-                self.minx = min(self.minx, min(x[self.num_rows :]))
-                self.miny = min(self.miny, min(y[self.num_rows :]))
-                self.minz = min(self.minz, min(z[self.num_rows :]))
-                self.maxx = max(self.maxx, max(x[self.num_rows :]))
-                self.maxy = max(self.maxy, max(y[self.num_rows :]))
-                self.maxz = max(self.maxz, max(z[self.num_rows :]))
+                self.minx = max(min(self.minx, min(x[self.num_rows :])), -2000)
+                self.miny = max(min(self.miny, min(y[self.num_rows :])), -2000)
+                self.minz = max(min(self.minz, min(z[self.num_rows :])), -2000)
+                self.maxx = min(max(self.maxx, max(x[self.num_rows :])), 2000)
+                self.maxy = min(max(self.maxy, max(y[self.num_rows :])), 2000)
+                self.maxz = min(max(self.maxz, max(z[self.num_rows :])), 2000)
             except Exception as e:
                 print(e)
                 return
@@ -72,7 +72,6 @@ class RealTimeVisualizer(Subscriber):
 
         self.current_time = time.time()
         self.elapsed_time = "%.2f" % (self.current_time - self.initial_time)
-        print(str(self.elapsed_time) + "," + str(self.num_rows))
         self.last_time = self.current_time
 
         self.ax.set_xlim(self.minx, self.maxx)

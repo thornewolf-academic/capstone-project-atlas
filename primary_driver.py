@@ -9,12 +9,12 @@ from mesh_generator import MeshGenerator
 # Comments are nominal values for Henry's machine
 # Updated paths have input, output, and scripts in Project ATLAS directory
 
-POINT_CLOUD_FILE_NAME = "\scan3.xyz"  # r"\TestMesh.xyz"
-POINT_CLOUD_FILE_LOCATION = ATLAS_DIR + "\point_cloud_in"  # r"C:\Users\Henry\PC_Input"
-MESH_FILE_NAME = "\mesh3.obj"  # r"\OutMesh.obj"
-MESH_FILE_LOCATION = ATLAS_DIR + "\mesh_out"  # r"C:\Users\Henry\PC_Output"
-SCRIPT_FILE_NAME = "\script1.mlx"  # r"\BunnyPoisson.mlx"
-SCRIPT_FILE_LOCATION = ATLAS_DIR + "\scripts"  # r"C:\Users\Henry"
+POINT_CLOUD_FILE_NAME = "scan3.xyz"
+POINT_CLOUD_FILE_LOCATION = "point_cloud_in"
+MESH_FILE_NAME = "mesh3.obj"
+MESH_FILE_LOCATION = "mesh_out"
+SCRIPT_FILE_NAME = "script1.mlx"
+SCRIPT_FILE_LOCATION = "scripts"
 
 
 def main():
