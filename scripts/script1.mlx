@@ -1,0 +1,21 @@
+<!DOCTYPE FilterScript>
+<FilterScript>
+ <filter name="Compute normals for point sets">
+  <Param type="RichInt" description="Neighbour num" tooltip="The number of neighbors used to estimate normals." name="K" value="10"/>
+  <Param type="RichInt" description="Smooth Iteration" tooltip="The number of smoothing iteration done on the p used to estimate and propagate normals." name="smoothIter" value="0"/>
+  <Param type="RichBool" description="Flip normals w.r.t. viewpoint" tooltip="If the 'viewpoint' (i.e. scanner position) is known, it can be used to disambiguate normals orientation, so that all the normals will be oriented in the same direction." name="flipFlag" value="false"/>
+  <Param x="0" z="0" type="RichPoint3f" description="Viewpoint Pos." tooltip="The viewpoint position can be set by hand (i.e. getting the current viewpoint) or it can be retrieved from mesh camera, if the viewpoint position is stored there." y="0" name="viewPos"/>
+ </filter>
+ <filter name="Surface Reconstruction: Screened Poisson">
+  <Param type="RichBool" description="Merge all visible layers" tooltip="Enabling this flag means that all the visible layers will be used for providing the points." name="visibleLayer" value="false"/>
+  <Param type="RichInt" description="Reconstruction Depth" tooltip="This integer is the maximum depth of the tree that will be used for surface reconstruction. Running at depth d corresponds to solving on a voxel grid whose resolution is no larger than 2^d x 2^d x 2^d. Note that since the reconstructor adapts the octree to the sampling density, the specified reconstruction depth is only an upper bound. The default value for this parameter is 8." name="depth" value="8"/>
+  <Param type="RichInt" description="Adaptive Octree Depth" tooltip="This integer specifies the depth beyond depth the octree will be adapted. At coarser depths, the octree will be complete, containing all 2^d x 2^d x 2^d nodes. The default value for this parameter is 5." name="fullDepth" value="5"/>
+  <Param type="RichInt" description="Conjugate Gradients Depth" tooltip="This integer is the depth up to which a conjugate-gradients solver will be used to solve the linear system. Beyond this depth Gauss-Seidel relaxation will be used. The default value for this parameter is 0." name="cgDepth" value="0"/>
+  <Param type="RichFloat" description="Scale Factor" tooltip="This floating point value specifies the ratio between the diameter of the cube used for reconstruction and the diameter of the samples' bounding cube. The default value is 1.1." name="scale" value="1.1"/>
+  <Param type="RichFloat" description="Minimum Number of Samples" tooltip="This floating point value specifies the minimum number of sample points that should fall within an octree node as the octree construction is adapted to sampling density. For noise-free samples, small values in the range [1.0 - 5.0] can be used. For more noisy samples, larger values in the range [15.0 - 20.0] may be needed to provide a smoother, noise-reduced, reconstruction. The default value is 1.5." name="samplesPerNode" value="1.5"/>
+  <Param type="RichFloat" description="Interpolation Weight" tooltip="This floating point value specifies the importants that interpolation of the point samples is given in the formulation of the screened Poisson equation. The results of the original (unscreened) Poisson Reconstruction can be obtained by setting this value to 0. The default value for this parameter is 4." name="pointWeight" value="4"/>
+  <Param type="RichInt" description="Gauss-Seidel Relaxations" tooltip="This integer value specifies the number of Gauss-Seidel relaxations to be performed at each level of the hierarchy. The default value for this parameter is 8." name="iters" value="8"/>
+  <Param type="RichBool" description="Confidence Flag" tooltip="Enabling this flag tells the reconstructor to use the quality as confidence information; this is done by scaling the unit normals with the quality values. When the flag is not enabled, all normals are normalized to have unit-length prior to reconstruction." name="confidence" value="false"/>
+  <Param type="RichBool" description="Pre-Clean" tooltip="Enabling this flag force a cleaning pre-pass on the data removing all unreferenced vertices or vertices with null normals." name="preClean" value="false"/>
+ </filter>
+</FilterScript>

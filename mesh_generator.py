@@ -22,8 +22,6 @@ class MeshGenerator:
         out_f = f"{self.out_dir}{self.out_file}"
         script_f = f"{self.script_dir}{self.script_file}"
 
-        command_init = f"{meshserver_dir_f}"
-
         command_mesh = f"{meshserver_dir_f} -i {in_f} -o {out_f} -s {script_f}"
 
         command_launch = f"start MeshLab {out_f}"
@@ -33,20 +31,15 @@ class MeshGenerator:
     # Run the generated strings in the command line.
     def auto_mesh(self):
         # It might be better to add the input and output directories as ENV_VARS or auto-generate them.
-        os.system("echo Running... ")
+        os.system("echo Running Mesh Step... ")
 
         # IMPORTANT: Default input args for Henry's machine: r"\TestMesh.xyz", r"C:\Users\Henry\PC_Input", r"\OutMesh.obj", r"C:\Users\Henry\PC_Output", r"\BunnyPoisson.mlx", r"C:\Users\Henry"
         command_dict = self.generate_commands()
 
-        #print(command_dict['init'])
-        print(command_dict['mesh'])
-        print(command_dict['launch'])
-
-        #os.system(command_dict['init'])
         os.system(command_dict['mesh'])
         os.system(command_dict['launch'])
 
-        os.system("echo Complete")
+        os.system("echo Complete, Opening Mesh... ")
 
     # Begin the automatic meshing process.
     def begin(self):

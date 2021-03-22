@@ -1,14 +1,16 @@
 import time
 import logging
+import os
 from mesh_generator import MeshGenerator
 
-POINT_CLOUD_FILE_NAME = r"\TestMesh.xyz"
-POINT_CLOUD_FILE_LOCATION = r"C:\Users\Henry\PC_Input"
-MESH_FILE_NAME = r"\OutMesh.obj"
-MESH_FILE_LOCATION = r"C:\Users\Henry\PC_Output"
-SCRIPT_FILE_NAME = r"\BunnyPoisson.mlx"
-SCRIPT_FILE_LOCATION = r"C:\Users\Henry"
+ATLAS_DIR = os.path.dirname(__file__)
 
+POINT_CLOUD_FILE_NAME = '\scan_test.xyz'                        #r"\TestMesh.xyz"
+POINT_CLOUD_FILE_LOCATION = ATLAS_DIR + '\point_cloud_in'       #r"C:\Users\Henry\PC_Input"
+MESH_FILE_NAME = '\mesh_test.obj'                               #r"\OutMesh.obj"
+MESH_FILE_LOCATION = ATLAS_DIR + '\mesh_out'                    #r"C:\Users\Henry\PC_Output"
+SCRIPT_FILE_NAME = '\script1.mlx'                               #r"\BunnyPoisson.mlx"
+SCRIPT_FILE_LOCATION = ATLAS_DIR + '\scripts'                   #r"C:\Users\Henry"
 
 def main():
     logger = logging.Logger("primary_driver", level=logging.INFO)
