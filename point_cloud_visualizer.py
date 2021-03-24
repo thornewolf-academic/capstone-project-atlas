@@ -41,7 +41,10 @@ class PointCloudVisualizer(Subscriber):
         dtotal = np.sqrt(np.square(dx) + np.square(dy) + np.square(dz))
         print('Calculated dtotal')
 
-        self.scat = self.ax.scatter(x, y, z, c=dtotal) 
+        cm_base = mpl.cm.get_cmap('RdYlGn')
+        cm = cm_base.reversed()
+
+        self.scat = self.ax.scatter(x, y, z, c=dtotal, vmin = 0, vmax = 5, cmap = cm) 
 
         self.minx = min(x)
         self.miny = min(y)
@@ -54,6 +57,14 @@ class PointCloudVisualizer(Subscriber):
         self.ax.set_ylim(self.miny, self.maxy)
         self.ax.set_zlim(self.minz, self.maxz)
 
+        self.ax.set_xlabel('cm')
+        self.ax.set_ylabel('cm')
+        self.ax.set_zlabel('cm')
+
+        self.ax.xaxis.set_tick_params(labelsize=8)
+        self.ax.yaxis.set_tick_params(labelsize=8)
+        self.ax.zaxis.set_tick_params(labelsize=8)
+
         # static axes
         # ax.set_xlim(0, 10)
         # ax.set_ylim(0, 10)
@@ -61,8 +72,8 @@ class PointCloudVisualizer(Subscriber):
         
         # plt.colorbar(self.scat, label='Uncertainty (cm)', boundaries=np.linspace(0,5,100)) 
         plt.colorbar(self.scat, label='Uncertainty (cm)')
-        plt.show()
-        self.fig.suptitle("Point Cloud Final")     
+        self.fig.suptitle("Point Cloud Final")
+        plt.show()     
     
 
 if __name__ == '__main__':
