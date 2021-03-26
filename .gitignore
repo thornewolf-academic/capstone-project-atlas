@@ -3,3 +3,7 @@ __pycache__/*
 *.tmp
 *.xyz
 env/*
+testing_data_files/*
+*.obj
+*.exe
+*.log
