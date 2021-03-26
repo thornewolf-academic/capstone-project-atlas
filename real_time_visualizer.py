@@ -15,6 +15,8 @@ class RealTimeVisualizer(Subscriber):
     def __init__(self, point_cloud_file_name):
         intvl = 1000  # ms
         self.point_cloud_file_name = point_cloud_file_name
+        if '.npy' not in self.point_cloud_file_name:
+            self.point_cloud_file_name = f'{self.point_cloud_file_name}.npy'
         self.data = np.array([[], [], []])
         self.minx = 0
         self.miny = 0
@@ -43,7 +45,7 @@ class RealTimeVisualizer(Subscriber):
 
     def update_plot(self, i):
         try:
-            self.data = np.load(f"{self.point_cloud_file_name}.npy", allow_pickle=True)
+            self.data = np.load(f"{self.point_cloud_file_name}", allow_pickle=True)
         except Exception as e:
             print("could not read file")
             print(e)
