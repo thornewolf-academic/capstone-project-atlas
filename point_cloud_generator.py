@@ -220,7 +220,7 @@ def measurement_to_xyz(measurement):
         return np.array([0, 0, 0])
     dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
     theta_step = uncertainties.ufloat(theta_step, 0.05)
-    phi_step = uncertainties.ufloat(phi_step, 0.05)
+    phi_step = uncertainties.ufloat(-phi_step, 0.05)
     return np.array(
         [
             dist
