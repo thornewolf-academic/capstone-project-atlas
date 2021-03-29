@@ -24,18 +24,18 @@ class PointCloudVisualizer(Subscriber):
         print('Begin')
         self.ax = self.fig.add_subplot(111, projection='3d')
     
-        x = unumpy.nominal_values(self.data[:, 0])
+        x = self.data[:, 0]
         print('Read x')
-        y = unumpy.nominal_values(self.data[:, 1])
+        y = self.data[:, 1]
         print('Read y')
-        z = unumpy.nominal_values(self.data[:, 2])
+        z = self.data[:, 2]
         print('Read z')
 
-        dx = unumpy.std_devs(self.data[:, 0])
+        dx = self.data[:, 3]
         print('Read dx')
-        dy = unumpy.std_devs(self.data[:, 1])
+        dy = self.data[:, 4]
         print('Read dy')
-        dz = unumpy.std_devs(self.data[:, 2])
+        dz = self.data[:, 5]
         print('Read dy')
 
         dtotal = np.sqrt(np.square(dx) + np.square(dy) + np.square(dz))
