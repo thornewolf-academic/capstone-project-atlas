@@ -16,7 +16,47 @@ class BluetoothParser:
         self.data_buffer += data
         return self.parse_buffer()
 
+    def validate_message_components(self, message_components):
+        """
+        We need to ensure that a received message on matches predefined allowed formats.
+        LOCALIZE,#
+        #,#,#,#
+        SCAN,#
+        #,#,#
+        """
+
+        # Localization validation
+        if (
+            len(message_components) == 2
+            and message_components[0] == "LOCALIZE"
+            and message_components[1].isnumeric()
+        ):
+            return True
+        # Scan validation
+        if (
+            len(message_components) == 2
+            and message_components[0] == "SCAN"
+            and message_components[1].isnumeric()
+        ):
+            return True
+        # Localization data validation
+        if len(message_components) == 4 and all(
+            comp.isnumeric() for comp in message_components
+        ):
+            return True
+        # Scan data validation
+        if len(message_components) == 3 and all(
+            comp.isnumeric() for comp in message_components
+        ):
+            return True
+        return False
+
     def interpret_message_components(self, message_components):
+        if not self.validate_message_components(message_components):
+            print(f"Received garbage data on parser")
+            print(f"{message_components=}")
+            return
+
         # See if the received command is to transition into a new state
         if message_components[0] in [SYSTEM_STATES.LOCALIZE, SYSTEM_STATES.SCAN]:
             self.state = message_components[0]
@@ -46,14 +86,17 @@ class BluetoothParser:
             return
 
         message = ""
+
         if buffer_as_string[-1:] == "\n":
             message = buffer_as_string
             print(message)
             self.data_buffer = b""
+
         if message == "":
             return
 
         message_components = message.split(",")
+        message_components = [comp.strip() for comp in message_components]
         interpretation = None
         try:
             interpretation = self.interpret_message_components(message_components)
