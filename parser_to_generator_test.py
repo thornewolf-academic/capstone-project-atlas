@@ -2,7 +2,6 @@ from operator import pos
 from utilities import UpdateSignal
 from sensor_measurement_parser import BluetoothParser
 from point_cloud_generator import PointCloudGenerator
-from point_cloud_normalizer import PointCloudNormalizer
 import matplotlib.pyplot as plt
 import numpy as np
 

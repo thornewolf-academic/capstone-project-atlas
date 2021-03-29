@@ -49,6 +49,12 @@ class BluetoothParser:
             comp.isnumeric() for comp in message_components
         ):
             return True
+        # Finished command
+        if (
+            len(message_components) == 1
+            and message_components[0] == SYSTEM_STATES.FINISHED
+        ):
+            return True
         return False
 
     def interpret_message_components(self, message_components):
@@ -65,6 +71,10 @@ class BluetoothParser:
             return
         if message_components[0] in [SYSTEM_STATES.RESET]:
             self.reset_state()
+            return
+
+        if message_components[0] in [SYSTEM_STATES.FINISHED]:
+            self.state = SYSTEM_STATES.FINISHED
             return
 
         # Provide message with approprite types and context
