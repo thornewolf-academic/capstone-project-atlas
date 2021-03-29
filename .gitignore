@@ -7,3 +7,5 @@ testing_data_files/*
 *.obj
 *.exe
 *.log
+point_cloud_normalizer.py
+to_xyz_temp.py
