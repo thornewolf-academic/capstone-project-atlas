@@ -72,7 +72,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
             # Convert measurement to inertial location and store
             location = self.measurement_to_location(measurement)
-            location = np.append(location, [[state_iteration]], axis=1)
+            location = np.append([[state_iteration]], location, axis=1)
             self.scan_locations[state_iteration].append(location)
 
             # Hardcoded rate-limit on save frequency for performance
@@ -181,6 +181,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         return self._target_locations
 
     def save_scan(self):
+        # TODO(thorne): The shape of the saved scan is likely (n,8) instead of (n,7) this is because there is an uncertainty measurement related with the iteration number. Fix this.
         locs = []
         for iteration in self.scan_locations.keys():
             locs += self.scan_locations[iteration]
@@ -188,7 +189,9 @@ class PointCloudGenerator(Subscribable, Subscriber):
         locs = np.array(locs)
         locs = np.squeeze(locs, axis=(1,))
         locs = unp.nominal_values(locs)
-        np.save(self.point_cloud_file_name, locs)
+        stds = unp.std_devs(locs)
+        total_data = np.concatenate((locs, stds), axis=1)
+        np.save(self.point_cloud_file_name, total_data)
 
 
 def unorm(v):
