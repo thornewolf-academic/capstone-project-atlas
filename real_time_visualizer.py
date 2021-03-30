@@ -16,7 +16,10 @@ class RealTimeVisualizer(Subscriber):
         intvl = 1000  # ms
         self._target_locations = None
         self.point_cloud_file_name = point_cloud_file_name
-        self.target_locations_file_name = target_locations_file_name
+
+        if '.npy' not in self.point_cloud_file_name:
+            self.point_cloud_file_name = f'{self.point_cloud_file_name}.npy'
+
         self.data = np.array([[], [], []])
         self.minx = 0
         self.miny = 0
@@ -60,7 +63,7 @@ class RealTimeVisualizer(Subscriber):
 
     def update_plot(self, i):
         try:
-            self.data = np.load(f"{self.point_cloud_file_name}.npy", allow_pickle=True)
+            self.data = np.load(f"{self.point_cloud_file_name}", allow_pickle=True)
         except Exception as e:
             print("could not read file")
             print(e)
@@ -79,12 +82,16 @@ class RealTimeVisualizer(Subscriber):
 
         if self.data.shape[0] != self.num_rows:
             try:
-                self.minx = min(self.minx, min(x[self.num_rows :]))
-                self.miny = min(self.miny, min(y[self.num_rows :]))
-                self.minz = min(self.minz, min(z[self.num_rows :]))
-                self.maxx = max(self.maxx, max(x[self.num_rows :]))
-                self.maxy = max(self.maxy, max(y[self.num_rows :]))
-                self.maxz = max(self.maxz, max(z[self.num_rows :]))
+                x = self.data[:, 0]
+                y = self.data[:, 1]
+                z = self.data[:, 2]
+                self.minx = max(min(self.minx, min(x[self.num_rows :])), -2000)
+                self.miny = max(min(self.miny, min(y[self.num_rows :])), -2000)
+                self.minz = max(min(self.minz, min(z[self.num_rows :])), -2000)
+                self.maxx = min(max(self.maxx, max(x[self.num_rows :])), 2000)
+                self.maxy = min(max(self.maxy, max(y[self.num_rows :])), 2000)
+                self.maxz = min(max(self.maxz, max(z[self.num_rows :])), 2000)
+
             except Exception as e:
                 print(e)
                 return

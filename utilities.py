@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy as np
 
 
 class UpdateSignal(Enum):
@@ -34,3 +35,14 @@ class SYSTEM_STATES:
     LOCALIZE = "LOCALIZE"
     SCAN = "SCAN"
     RESET = "RESET"
+    FINISHED = "FINISHED"
+
+
+def numpy_to_xyz(numpy_path):
+    data = np.load(numpy_path)
+    data = data[~np.isnan(data[:, 0]), :]
+    print(data)
+    with open(f"{numpy_path}.xyz", "w") as f:
+        for i in range(data.shape[0]):
+            s = f"{data[i, 0]} {data[i, 1]} {data[i, 2]}"
+            f.write(s + "\n")

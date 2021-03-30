@@ -25,10 +25,11 @@ logger = logging.getLogger("point_cloud_generator").addHandler(ch)
 
 
 class PointCloudGenerator(Subscribable, Subscriber):
-    def __init__(self, point_cloud_file_name):
+    def __init__(self, point_cloud_file_name, target_locations_file_name):
         super().__init__()
 
         self.point_cloud_file_name = point_cloud_file_name
+        self.target_locations_file_name = target_locations_file_name
         self.target_measurements = defaultdict(
             lambda: defaultdict(lambda: defaultdict(lambda: None))
         )
@@ -72,7 +73,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
             # Convert measurement to inertial location and store
             location = self.measurement_to_location(measurement)
-            location = np.append(location, [[state_iteration]], axis=1)
+            location = np.append([[state_iteration]], location, axis=1)
             self.scan_locations[state_iteration].append(location)
 
             # Hardcoded rate-limit on save frequency for performance
@@ -181,14 +182,34 @@ class PointCloudGenerator(Subscribable, Subscriber):
         return self._target_locations
 
     def save_scan(self):
+        # TODO(thorne): The shape of the saved scan is likely (n,8) instead of (n,7) this is because there is an uncertainty measurement related with the iteration number. Fix this.
+        # Save all scanned points
         locs = []
         for iteration in self.scan_locations.keys():
             locs += self.scan_locations[iteration]
+
+        target_locs = []
+        for iteration in self.target_locations.keys():
+            for target_id in self.target_locations[iteration].keys():
+                data = np.append(
+                    [iteration, target_id],
+                    unp.nominal_values(
+                        self.target_locations[iteration][target_id]
+                    ).tolist(),
+                )
+                target_locs += [data]
+
+        target_locs = np.array(target_locs)
+
         logging.info(f"Total locations {len(locs)}")
+
         locs = np.array(locs)
         locs = np.squeeze(locs, axis=(1,))
         locs = unp.nominal_values(locs)
+        # stds = unp.std_devs(locs)
+        # total_data = np.concatenate((locs, stds), axis=1)
         np.save(self.point_cloud_file_name, locs)
+        np.save(self.target_locations_file_name, target_locs)
 
 
 def unorm(v):
@@ -220,7 +241,7 @@ def measurement_to_xyz(measurement):
         return np.array([0, 0, 0])
     dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
     theta_step = uncertainties.ufloat(theta_step, 0.05)
-    phi_step = uncertainties.ufloat(phi_step, 0.05)
+    phi_step = uncertainties.ufloat(-phi_step, 0.05)
     return np.array(
         [
             dist

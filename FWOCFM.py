@@ -32,7 +32,7 @@ def FWOCFM(data):
         print('FWOCFM progerss:')
         bar.start()
 
-        for y in range (10):
+        for y in range (0,10):
                 bar.update(y+1)
                 if y == 0:
                         Cs = 1 
@@ -80,7 +80,7 @@ def FWOCFM(data):
                         b[j] = (fun[j] - B - x_pm[j])/(math.sqrt(2)*sig_m)
                         def integrand(X):
                                 return -X**2
-                        FW_m = (fun[j] - np.int(1e12)*(Cv*(scipy.integrate.quad(integrand,a[j],b[j]))))
+                        FW_m = (fun[j] - (np.int(10000/(6.28)))*((scipy.integrate.quad(integrand,a[j],b[j]))))
                         fuzz = FW_m[0]
                         fuzzies[j] = fuzz
         bar.finish()
