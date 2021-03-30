@@ -10,6 +10,7 @@ from mesh_generator import MeshGenerator
 # Updated paths have input, output, and scripts in Project ATLAS directory
 
 POINT_CLOUD_FILE_NAME = "scan3.xyz"
+TARGET_LOCATIONS_FILE_NAME = "target_locations"
 POINT_CLOUD_FILE_LOCATION = "point_cloud_in"
 MESH_FILE_NAME = "mesh3.obj"
 MESH_FILE_LOCATION = "mesh_out"
@@ -21,7 +22,7 @@ def main():
     logger = logging.Logger("primary_driver", level=logging.INFO)
 
     sensor_watcher = SensorWatcher()
-    point_cloud_generator = PointCloudGenerator(POINT_CLOUD_FILE_NAME)
+    point_cloud_generator = PointCloudGenerator(POINT_CLOUD_FILE_NAME, TARGET_LOCATIONS_FILE_NAME)
     real_time_visualizer = RealTimeVisualizer(POINT_CLOUD_FILE_NAME)
 
     sensor_watcher.add_subscriber(point_cloud_generator)
