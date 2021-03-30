@@ -12,9 +12,11 @@ from multiprocessing import Process
 
 
 class RealTimeVisualizer(Subscriber):
-    def __init__(self, point_cloud_file_name):
+    def __init__(self, point_cloud_file_name, target_locations_file_name):
         intvl = 1000  # ms
+        self._target_locations = None
         self.point_cloud_file_name = point_cloud_file_name
+        self.target_locations_file_name = target_locations_file_name
         self.data = np.array([[], [], []])
         self.minx = 0
         self.miny = 0
@@ -41,6 +43,21 @@ class RealTimeVisualizer(Subscriber):
         )
         plt.show()
 
+    @property
+    def target_locations(self):
+        if self._target_locations is not None:
+            return self._target_locations
+        try:
+            self.beacons = np.load(
+                f"{self.target_locations_file_name}.npy", allow_pickle=True
+            )
+
+            self.beacons = self.beacons[self.beacons[:, 0] == 1]
+            self._target_locations = self.beacons[:, 2:5]
+            return self._target_locations
+        except:
+            return np.array([[], [], []])
+
     def update_plot(self, i):
         try:
             self.data = np.load(f"{self.point_cloud_file_name}.npy", allow_pickle=True)
@@ -49,11 +66,19 @@ class RealTimeVisualizer(Subscriber):
             print(e)
             return
 
+        beacons = np.concatenate(
+            (np.zeros((self.target_locations.shape[0], 1)), self.target_locations),
+            axis=1,
+        )
+
+        data = np.concatenate((self.data[:, 0:4], beacons), axis=0)
+        pos = data[:, 0]
+        x = data[:, 1]
+        y = data[:, 2]
+        z = data[:, 3]
+
         if self.data.shape[0] != self.num_rows:
             try:
-                x = self.data[:, 0]
-                y = self.data[:, 1]
-                z = self.data[:, 2]
                 self.minx = min(self.minx, min(x[self.num_rows :]))
                 self.miny = min(self.miny, min(y[self.num_rows :]))
                 self.minz = min(self.minz, min(z[self.num_rows :]))
@@ -66,13 +91,8 @@ class RealTimeVisualizer(Subscriber):
 
             self.num_rows = self.data.shape[0]
 
-        x = self.data[:, 0]
-        y = self.data[:, 1]
-        z = self.data[:, 2]
-
         self.current_time = time.time()
         self.elapsed_time = "%.2f" % (self.current_time - self.initial_time)
-        print(str(self.elapsed_time) + "," + str(self.num_rows))
         self.last_time = self.current_time
 
         self.ax.set_xlim(self.minx, self.maxx)
@@ -84,7 +104,28 @@ class RealTimeVisualizer(Subscriber):
         # ax.set_ylim(0, 10)
         # ax.set_zlim(0, 10)
 
+        d = {
+            0: "k",  # 0 indicates a flag
+            1: "b",
+            2: "g",
+            3: "r",
+            4: "c",
+            5: "m",
+            6: "y",
+            7: "xkcd:burnt orange",
+            8: "xkcd:purple",
+            9: "xkcd:pink",
+            10: "xkcd:magenta",
+            11: "xkcd:tan",
+            12: "xkcd:lavender",
+            13: "xkcd:olive",
+        }
+
+        colorassign = np.vectorize(lambda x: d[x])
+
         self.scat._offsets3d = (x, y, z)
+        self.scat._facecolor3d = colorassign(pos)
+        self.scat._edgecolor3d = colorassign(pos)
         numpoints = "Number of Points: " + str(self.num_rows)
         time_elapsed = "Time Elapsed: " + str(self.elapsed_time) + "s  "
         iteration = " Iteration: " + str(i)
@@ -122,4 +163,4 @@ class RealTimeVisualizer(Subscriber):
 
 
 if __name__ == "__main__":
-    RealTimeVisualizer("sample_point_data.npy")
+    RealTimeVisualizer("sim_loc_data", "target_locations")
