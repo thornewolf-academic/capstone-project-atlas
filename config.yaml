@@ -1,0 +1,11 @@
+PATHS:
+  POINT_CLOUD_LOCATION: 'point_cloud'
+  FILTERED_POINT_CLOUD_LOCATION: 'filtered_point_cloud'
+  MESH_LOCATION: 'mesh'
+  SCRIPT_LOCATION: 'script'
+
+NAMES:
+  POINT_CLOUD_NAME: 'scan_test.xyz'
+  FILTERED_POINT_CLOUD_NAME: 'filtered_data.xyz'
+  MESH_NAME: 'filtered_data_mesh.obj'
+  SCRIPT_NAME: 'script1.mlx'

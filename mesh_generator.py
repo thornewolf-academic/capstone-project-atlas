@@ -3,14 +3,10 @@ import os
 # Holds all file location and file names as properties of the class. All functions for automated meshing are contained within the class.
 class MeshGenerator:
 
-    def __init__(self, in_file, in_dir, out_file, out_dir, script_file, script_dir):
+    def __init__(self, file_dict):
         self.finished = 0    
-        self.in_file = in_file 
-        self.in_dir = in_dir 
-        self.out_file = out_file 
-        self.out_dir = out_dir 
-        self.script_file = script_file 
-        self.script_dir = script_dir   
+        self.file_dict = file_dict
+
 
     # Create the strings for the automatic meshing that will run in the command line.
     def generate_commands(self):
@@ -18,15 +14,15 @@ class MeshGenerator:
         meshserver_dir = "C:\Program Files\VCG\MeshLab\meshlabserver.exe" # Default install location
         meshserver_dir_f = f'"{meshserver_dir}"'
 
-        in_f = f"{self.in_dir}{self.in_file}"
-        out_f = f"{self.out_dir}{self.out_file}"
-        script_f = f"{self.script_dir}{self.script_file}"
+        in_f = self.file_dict["filt_point_cloud_name"]
+        out_f = self.file_dict["mesh_name"]
+        script_f = self.file_dict["script_name"]
 
         command_mesh = f"{meshserver_dir_f} -i {in_f} -o {out_f} -s {script_f}"
 
         command_launch = f"start MeshLab {out_f}"
 
-        return {'init': command_init, 'mesh': command_mesh, 'launch': command_launch}
+        return {'mesh': command_mesh, 'launch': command_launch}
 
     # Run the generated strings in the command line.
     def auto_mesh(self):
