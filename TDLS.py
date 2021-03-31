@@ -49,13 +49,13 @@ def TDLS(X,Y,data):
         fun = (aval+bval**2) * data
     scaling = np.max(data)/np.max(fun)
     TDLS = scaling*fun
-    for i in range(5,len(TDLS)-5):
+    for i in range(10,len(TDLS)-10):
         bar.update(i+1)
-        nearby_points = np.array([TDLS[i-5],TDLS[i-4],TDLS[i-3],TDLS[i-2],TDLS[i-1],TDLS[i],TDLS[i+1],TDLS[i+2],TDLS[i+3],TDLS[i+4],TDLS[i+5]])
+        nearby_points = np.array([TDLS[i-10], TDLS[i-9], TDLS[i-8], TDLS[i-7], TDLS[i-6], TDLS[i-5],TDLS[i-4],TDLS[i-3],TDLS[i-2],TDLS[i-1],TDLS[i],TDLS[i+1],TDLS[i+2],TDLS[i+3],TDLS[i+4],TDLS[i+5], TDLS[i+6],TDLS[i+7],TDLS[i+8],TDLS[i+9],TDLS[i+10]])
         mean_nearby_points = np.mean(nearby_points)
-        if TDLS[i] >= 1.5*mean_nearby_points:
+        if TDLS[i] >= 1.3*mean_nearby_points:
             TDLS[i] = np.mean(TDLS)
-        elif TDLS[i] <= 1.2*(np.mean(TDLS)):
+        elif TDLS[i] <= 1.3*(np.mean(TDLS)):
             TDLS[i] = np.mean(TDLS)
         else:
             TDLS[i] = TDLS[i]
