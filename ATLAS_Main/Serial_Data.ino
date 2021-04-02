@@ -6,9 +6,9 @@ void recvWithStartEndMarkers() {
     char endMarker = '>';
     char rc;
 
-    while (Serial1.available() > 0 && newData == false) {
-        rc = Serial1.read();
-
+    while (camera.available() > 0 && newData == false) {
+        rc = camera.read();
+        //Serial.println(rc);
         if (recvInProgress == true) {
             if (rc != endMarker) {
                 receivedChars[ndx] = rc;
@@ -34,6 +34,7 @@ void recvWithStartEndMarkers() {
 //============
 
 void parseData() {      // split the data into its parts
+
 
     char * strtokIndx; // this is used by strtok() as an index
 

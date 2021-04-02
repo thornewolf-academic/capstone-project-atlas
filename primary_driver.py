@@ -37,3 +37,7 @@ def main():
         time.sleep(1)
 
     logger.info("Completed all ATLAS software :)")
+
+
+if __name__ == "__main__":
+    main()

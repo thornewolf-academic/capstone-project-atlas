@@ -1,0 +1,7 @@
+pandas==1.0.1
+uncertainties==3.1.4
+matplotlib==3.2.0
+progressbar==2.5
+scipy==1.4.1
+pyyaml==5.3
+numpy==1.18.1

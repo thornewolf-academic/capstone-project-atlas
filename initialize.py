@@ -1,6 +1,7 @@
 import os
 import yaml
 
+# Make the folders to store generated files
 def make_folders(current_dir, cfg):
 
     dir_dict = {
@@ -18,6 +19,7 @@ def make_folders(current_dir, cfg):
 
     return dir_dict
 
+# Create a file dictionary based on the file names given in config.yaml 
 def set_files(dir_dict, cfg):
     file_dict = {
         "script_name" : os.path.join(dir_dict["script_dir"], cfg["NAMES"]["SCRIPT_NAME"]),
@@ -28,6 +30,7 @@ def set_files(dir_dict, cfg):
 
     return file_dict
 
+# Initialization function that contains config loading, parsing, and execution
 def initialize():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.join(current_dir, 'config.yaml')
@@ -39,6 +42,4 @@ def initialize():
     file_dict = set_files(dir_dict, cfg)
 
     return file_dict
-
-initialize()
 
