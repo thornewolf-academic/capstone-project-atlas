@@ -23,9 +23,9 @@ class MeshGenerator:
         )
         # meshserver_dir = clean_string_for_windows(meshserver_dir)
 
-        in_f = clean_string_for_windows(self.file_dict["filt_point_cloud_name"])
-        out_f = clean_string_for_windows(self.file_dict["mesh_name"])
-        script_f = clean_string_for_windows(self.file_dict["script_name"])
+        in_f = self.file_dict["filt_point_cloud_name"]
+        out_f = self.file_dict["mesh_name"]
+        script_f = self.file_dict["script_name"]
 
         command_mesh = f'"{meshserver_dir}" -i "{in_f}" -o "{out_f}" -s "{script_f}"'
         self.logger.info(f"{command_mesh=}")
