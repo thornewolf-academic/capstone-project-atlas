@@ -57,9 +57,7 @@ def main():
 
     gen.mark_finished()
 
-    data_filterer = DataFilterer(
-        POINT_CLOUD_FILE_NAME, FILTERED_DATA_PATH, UNCERTAINTY_PATH
-    )
+    data_filterer = DataFilterer(configuration_dictionary)
 
     data_filterer.begin()
 

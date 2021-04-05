@@ -18,7 +18,7 @@ import time
 start = time.time()
 
 class DataFilterer:
-    def __init__(self,file_dict)):
+    def __init__(self,file_dict):
         #self.data_in_path = data_in_path
         self.finished = 0
         self.file_dict = file_dict 
