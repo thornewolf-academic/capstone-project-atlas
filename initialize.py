@@ -44,7 +44,7 @@ def set_files(dir_dict, cfg):
 
 # Initialization function that contains config loading, parsing, and execution
 def initialize():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    current_dir = "."
     config_file = os.path.join(current_dir, "config.yaml")
 
     with open(config_file, "r") as ymlfile:
