@@ -17,19 +17,19 @@ from typing import Union, List
 STEPS_PER_ROTATION = 3200
 LIDAR_UNCERT = 0.05
 
-logging.basicConfig(filename="runs.log", level=logging.INFO)
-ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
-ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-logger = logging.getLogger("point_cloud_generator").addHandler(ch)
-
 
 class PointCloudGenerator(Subscribable, Subscriber):
-    def __init__(self, point_cloud_file_name, target_locations_file_name):
+    def __init__(self, config):
         super().__init__()
 
-        self.point_cloud_file_name = point_cloud_file_name
-        self.target_locations_file_name = target_locations_file_name
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        self.logger = logging.getLogger("point_cloud_generator")
+        self.logger.addHandler(ch)
+
+        self.point_cloud_file_name = config["point_cloud_name"]
+        self.target_locations_file_name = config["sensor_package_locations_name"]
         self.target_measurements = defaultdict(
             lambda: defaultdict(lambda: defaultdict(lambda: None))
         )
@@ -46,15 +46,19 @@ class PointCloudGenerator(Subscribable, Subscriber):
         self.targets_set = set()
 
     def signal(self, signal: UpdateSignal, data=None):
+        self.logger.info(f"Signaled with new data.")
         if signal == UpdateSignal.NEW_DATA:
             self.handle_new_data(data)
         return super().signal(signal, data=data)
 
     def mark_finished(self):
+        self.logger.info(f"Marking self as finished.")
         self.save_scan()
         self.finished = True
 
     def handle_new_data(self, data: List[str]):
+        self.logger.info(f"New data received\n\t{data=}")
+
         system_state = data[0]
 
         if system_state == SYSTEM_STATES.LOCALIZE:
@@ -166,10 +170,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
         inertial_offset = np.zeros((3,))
         for tid in inertial_locations:
-            print(tid)
             if tid in self._target_locations[self.iteration - 1]:
-                # print(inertial_locations[tid])
-                # print(self._target_locations[self.iteration - 1][tid])
                 inertial_offset = (
                     inertial_locations[tid]
                     - self._target_locations[self.iteration - 1][tid]
@@ -201,14 +202,14 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
         target_locs = np.array(target_locs)
 
-        logging.info(f"Total locations {len(locs)}")
+        self.logger.info(f"Total locations {len(locs)}")
 
         locs = np.array(locs)
         locs = np.squeeze(locs, axis=(1,))
         locs = unp.nominal_values(locs)
-        # stds = unp.std_devs(locs)
-        # total_data = np.concatenate((locs, stds), axis=1)
-        np.save(self.point_cloud_file_name, locs)
+        stds = unp.std_devs(locs)
+        total_data = np.concatenate((locs, stds), axis=1)
+        np.save(self.point_cloud_file_name, total_data)
         np.save(self.target_locations_file_name, target_locs)
 
 

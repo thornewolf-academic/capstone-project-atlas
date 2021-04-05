@@ -11,3 +11,4 @@ NAMES:
   FILTERED_POINT_CLOUD_NAME: 'filtered_point_cloud.npy.xyz'
   MESH_NAME: 'filtered_data_mesh.obj'
   SCRIPT_NAME: 'script1.mlx'
+  SENSOR_PACKAGE_LOCATIONS_NAME: 'sensor_package_locations.npy'
