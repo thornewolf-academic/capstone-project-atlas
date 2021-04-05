@@ -7,7 +7,7 @@ PATHS:
 
 # The desired file names for output files, avoid using duplicate names.
 NAMES:
-  POINT_CLOUD_NAME: 'scan_test.xyz'
+  POINT_CLOUD_NAME: 'scan_test.npy'
   FILTERED_POINT_CLOUD_NAME: 'filtered_point_cloud.npy.xyz'
   MESH_NAME: 'filtered_data_mesh.obj'
   SCRIPT_NAME: 'script1.mlx'
