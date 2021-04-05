@@ -18,12 +18,13 @@ import time
 start = time.time()
 
 class DataFilterer:
-    def __init__(self,data_in_path,filt_point_cloud_path,uncertainty_path):
+    def __init__(self,file_dict)):
         #self.data_in_path = data_in_path
         self.finished = 0
-        self.data = np.load(data_in_path)
-        self.filt_point_cloud_path = filt_point_cloud_path
-        self.uncertainty_path = uncertainty_path
+        self.file_dict = file_dict 
+        self.data = np.load(self.file_dict["point_cloud_name"])
+        self.filt_point_cloud_path = file_dict["filtered_point_cloud_name"]
+        self.uncertainty_path = self.file_dict["filtered_point_cloud_uncertainty_name"]
 
     def begin(self):
         self.fixed_data = self.surface_match()
@@ -135,6 +136,7 @@ class DataFilterer:
         filt_data = np.transpose(filt_data)
 
         print('DATA FILTER COMPLETE!')
+        self.finished = 1
 
         return filt_data
 
