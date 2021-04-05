@@ -1,6 +1,5 @@
 import os
 import logging
-from utilities import clean_string_for_windows
 import subprocess
 
 # Holds all file location and file names as properties of the class. All functions for automated meshing are contained within the class.

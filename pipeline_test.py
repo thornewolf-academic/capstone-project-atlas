@@ -4,7 +4,6 @@ import logging
 from utilities import UpdateSignal
 from sensor_measurement_parser import BluetoothParser
 from point_cloud_generator import PointCloudGenerator
-from point_cloud_normalizer import PointCloudNormalizer
 from mesh_generator import MeshGenerator
 from data_filterer import DataFilterer
 from point_cloud_visualizer import PointCloudVisualizer
