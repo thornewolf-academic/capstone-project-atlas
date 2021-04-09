@@ -13,7 +13,7 @@ import logging
 
 
 class RealTimeVisualizer(Subscriber):
-    def __init__(self, point_cloud_file_name, target_locations_file_name):
+    def __init__(self, file_dict):
 
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
@@ -23,8 +23,10 @@ class RealTimeVisualizer(Subscriber):
 
         intvl = 1000  # ms
         self._target_locations = None
-        self.point_cloud_file_name = point_cloud_file_name
-        self.target_locations_file_name = target_locations_file_name
+        self.point_cloud_file_name = self.file_dict["point_cloud_name"]
+        self.target_locations_file_name = self.file_dict[
+            "sensor_package_locations_name"
+        ]
 
         if ".npy" not in self.point_cloud_file_name:
             self.point_cloud_file_name = f"{self.point_cloud_file_name}.npy"
@@ -142,13 +144,16 @@ class RealTimeVisualizer(Subscriber):
             11: "xkcd:tan",
             12: "xkcd:lavender",
             13: "xkcd:olive",
+            14: "xkcd:chartreuse",
+            15: "xkcd:goldenrod",
+            16: "xkcd:wine",
         }
 
         colorassign = np.vectorize(lambda x: d[x])
 
         self.scat._offsets3d = (x, y, z)
-        self.scat._facecolor3d = colorassign(pos)
-        self.scat._edgecolor3d = colorassign(pos)
+        self.scat._facecolor3d = colorassign(pos % 16)
+        self.scat._edgecolor3d = colorassign(pos % 16)
         numpoints = "Number of Points: " + str(self.num_rows)
         time_elapsed = "Time Elapsed: " + str(self.elapsed_time) + "s  "
         iteration = " Iteration: " + str(i)
