@@ -14,9 +14,9 @@ from uncertainties import unumpy
 
 
 class PointCloudVisualizer(Subscriber):
-    def __init__(self, point_cloud_file_name):
+    def __init__(self, file_dict):
         print("Initializing")
-        self.point_cloud_file_name = point_cloud_file_name
+        self.point_cloud_file_name = self.file_dict["filtered_point_cloud_uncertainty"]
         self.data = np.load(self.point_cloud_file_name, allow_pickle=True)
         print("Loaded data")
         self.fig = plt.figure()
