@@ -9,14 +9,28 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 import time
 import threading
 from multiprocessing import Process
+import logging
 
 
 class RealTimeVisualizer(Subscriber):
-    def __init__(self, point_cloud_file_name, target_locations_file_name):
+    def __init__(self, file_dict):
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        self.logger = logging.getLogger("real_time_visualizer")
+        self.logger.addHandler(ch)
+
         intvl = 1000  # ms
         self._target_locations = None
-        self.point_cloud_file_name = point_cloud_file_name
-        self.target_locations_file_name = target_locations_file_name
+        self.point_cloud_file_name = self.file_dict["point_cloud_name"]
+        self.target_locations_file_name = self.file_dict[
+            "sensor_package_locations_name"
+        ]
+
+        if ".npy" not in self.point_cloud_file_name:
+            self.point_cloud_file_name = f"{self.point_cloud_file_name}.npy"
+
         self.data = np.array([[], [], []])
         self.minx = 0
         self.miny = 0
@@ -37,6 +51,8 @@ class RealTimeVisualizer(Subscriber):
         p = Process(target=self.myplot, args=(intvl,))
         p.start()
 
+        self.logger.info(f"Initialized.")
+
     def myplot(self, intvl):
         self.ani = animation.FuncAnimation(
             self.fig, self.update_plot, blit=False, interval=intvl, repeat=False
@@ -46,24 +62,31 @@ class RealTimeVisualizer(Subscriber):
     @property
     def target_locations(self):
         if self._target_locations is not None:
+            self.logger.info(f"Using cached self._target_locations value")
             return self._target_locations
         try:
             self.beacons = np.load(
-                f"{self.target_locations_file_name}.npy", allow_pickle=True
+                f"{self.target_locations_file_name}", allow_pickle=True
             )
+            self.logger.info(f"Successfully loaded {self.target_locations_file_name=}")
 
             self.beacons = self.beacons[self.beacons[:, 0] == 1]
             self._target_locations = self.beacons[:, 2:5]
             return self._target_locations
-        except:
-            return np.array([[], [], []])
+        except Exception as e:
+            self.logger.error(
+                f"Failed to load beacons file {self.target_locations_file_name=}.\n\t{e=}"
+            )
+            return np.array([[], [], []]).T
 
     def update_plot(self, i):
+        self.logger.info(f"Updating plot for frame {i}.")
         try:
-            self.data = np.load(f"{self.point_cloud_file_name}.npy", allow_pickle=True)
+            self.data = np.load(f"{self.point_cloud_file_name}", allow_pickle=True)
         except Exception as e:
-            print("could not read file")
-            print(e)
+            self.logger.error(
+                f"could not read file {self.point_cloud_file_name}\n\t{e=}"
+            )
             return
 
         beacons = np.concatenate(
@@ -79,17 +102,19 @@ class RealTimeVisualizer(Subscriber):
 
         if self.data.shape[0] != self.num_rows:
             try:
-                self.minx = min(self.minx, min(x[self.num_rows :]))
-                self.miny = min(self.miny, min(y[self.num_rows :]))
-                self.minz = min(self.minz, min(z[self.num_rows :]))
-                self.maxx = max(self.maxx, max(x[self.num_rows :]))
-                self.maxy = max(self.maxy, max(y[self.num_rows :]))
-                self.maxz = max(self.maxz, max(z[self.num_rows :]))
+                self.minx = max(min(self.minx, min(x[self.num_rows :])), -2000)
+                self.miny = max(min(self.miny, min(y[self.num_rows :])), -2000)
+                self.minz = max(min(self.minz, min(z[self.num_rows :])), -2000)
+                self.maxx = min(max(self.maxx, max(x[self.num_rows :])), 2000)
+                self.maxy = min(max(self.maxy, max(y[self.num_rows :])), 2000)
+                self.maxz = min(max(self.maxz, max(z[self.num_rows :])), 2000)
+
             except Exception as e:
-                print(e)
+                self.logger.exception(e)
                 return
 
             self.num_rows = self.data.shape[0]
+            self.logger.info(f"Number of points is now {self.num_rows}.")
 
         self.current_time = time.time()
         self.elapsed_time = "%.2f" % (self.current_time - self.initial_time)

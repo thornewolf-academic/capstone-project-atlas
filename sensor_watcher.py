@@ -1,6 +1,6 @@
 from os import read
 from sensor_measurement_parser import BluetoothParser
-from utilities import Subscribable, UpdateSignal
+from utilities import SYSTEM_STATES, Subscribable, UpdateSignal
 import serial
 from serial.tools import list_ports
 from threading import Thread
@@ -15,8 +15,7 @@ class SensorWatcher(Subscribable):
         self.thread = None
 
     def read_until_complete(self):
-        while read_bytes := self.ser.read(1):
-            print(read_bytes)
+        while read_bytes := self.serial.read(1):
             measurement = self.parser.add_data(read_bytes)
             if measurement is not None:
                 self.signal_subscribers(UpdateSignal.NEW_DATA, data=measurement)
@@ -26,8 +25,12 @@ class SensorWatcher(Subscribable):
         self.thread = t
         self.thread.start()
 
+    @property
+    def finished(self):
+        return self.parser.state == SYSTEM_STATES.FINISHED
 
-def get_arduino_serial(baud_rate=9600):
+
+def get_arduino_serial(baud_rate=115200):
     ports = list_ports.comports()
     arduino_ports = [p for p in ports if "Arduino" in p.description]
     target_com = arduino_ports[0].device
