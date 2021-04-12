@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import initialize
 
-RAW_DATA_PATH = "testing_data_files/3_22/SCAN2_3_22_ThreeTotalPointsCleaned.TXT"
+RAW_DATA_PATH = "2_point_scan_4.5.TXT"
 POINT_CLOUD_FILE_NAME = RAW_DATA_PATH + ".npy"
 PACKAGE_LOCATIONS_FILE_NAME = "sensor_package_locations.npy"
 FILTERED_DATA_PATH = "filtered_point_cloud.npy"
@@ -39,23 +39,21 @@ def main():
 
     configuration_dictionary = initialize.initialize()
 
-    # We need to fake out the data passed to PointCloudGenerator. This process does so.
-    parser = BluetoothParser()
-    gen = PointCloudGenerator(configuration_dictionary)
-    real_time_visualizer = RealTimeVisualizer(
-        POINT_CLOUD_FILE_NAME, PACKAGE_LOCATIONS_FILE_NAME
-    )
+    # # We need to fake out the data passed to PointCloudGenerator. This process does so.
+    # parser = BluetoothParser()
+    # gen = PointCloudGenerator(configuration_dictionary)
+    # real_time_visualizer = RealTimeVisualizer(configuration_dictionary)
 
-    # The parser expects byte data like the serial passes.
-    with open(RAW_DATA_PATH, "rb") as f:
-        data = f.read()
+    # # The parser expects byte data like the serial passes.
+    # with open(RAW_DATA_PATH, "rb") as f:
+    #     data = f.read()
 
-    for c in data:
-        r = parser.add_data(bytes((c,)))
-        if r is not None:
-            gen.signal(UpdateSignal.NEW_DATA, r)
+    # for c in data:
+    #     r = parser.add_data(bytes((c,)))
+    #     if r is not None:
+    #         gen.signal(UpdateSignal.NEW_DATA, r)
 
-    gen.mark_finished()
+    # gen.mark_finished()
 
     data_filterer = DataFilterer(configuration_dictionary)
 
@@ -70,7 +68,7 @@ def main():
     while not mesh_generator.finished:
         time.sleep(1)
 
-    point_cloud_visualizer = PointCloudVisualizer(UNCERTAINTY_PATH)
+    point_cloud_visualizer = PointCloudVisualizer(configuration_dictionary)
     point_cloud_visualizer.begin()
 
     logger.info("Completed all ATLAS software :)")
