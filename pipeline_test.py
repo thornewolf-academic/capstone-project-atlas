@@ -39,21 +39,21 @@ def main():
 
     configuration_dictionary = initialize.initialize()
 
-    # # We need to fake out the data passed to PointCloudGenerator. This process does so.
-    # parser = BluetoothParser()
-    # gen = PointCloudGenerator(configuration_dictionary)
-    # real_time_visualizer = RealTimeVisualizer(configuration_dictionary)
+    # We need to fake out the data passed to PointCloudGenerator. This process does so.
+    parser = BluetoothParser()
+    gen = PointCloudGenerator(configuration_dictionary)
+    real_time_visualizer = RealTimeVisualizer(configuration_dictionary)
 
-    # # The parser expects byte data like the serial passes.
-    # with open(RAW_DATA_PATH, "rb") as f:
-    #     data = f.read()
+    # The parser expects byte data like the serial passes.
+    with open(RAW_DATA_PATH, "rb") as f:
+        data = f.read()
 
-    # for c in data:
-    #     r = parser.add_data(bytes((c,)))
-    #     if r is not None:
-    #         gen.signal(UpdateSignal.NEW_DATA, r)
+    for c in data:
+        r = parser.add_data(bytes((c,)))
+        if r is not None:
+            gen.signal(UpdateSignal.NEW_DATA, r)
 
-    # gen.mark_finished()
+    gen.mark_finished()
 
     data_filterer = DataFilterer(configuration_dictionary)
 

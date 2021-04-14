@@ -39,7 +39,7 @@ def set_files(dir_dict, cfg):
         "filt_point_cloud_name": os.path.join(
             dir_dict["filt_point_cloud_dir"], cfg["NAMES"]["FILTERED_POINT_CLOUD_NAME"]
         ),
-        "filtered_point_cloud_uncertainty.npy": os.path.join(
+        "filtered_point_cloud_uncertainty_name": os.path.join(
             dir_dict["filt_point_cloud_dir"], cfg["NAMES"]["UNCERTAINTY_NAME"]
         ),
         "mesh_name": os.path.join(dir_dict["mesh_dir"], cfg["NAMES"]["MESH_NAME"]),
