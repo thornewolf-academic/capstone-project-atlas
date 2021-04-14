@@ -41,7 +41,7 @@ class BluetoothParser:
             return True
         # Localization data validation
         if len(message_components) == 4 and all(
-            comp.isnumeric() for comp in message_components
+            comp.replace("-", "").isnumeric() for comp in message_components
         ):
             return True
         # Scan data validation
