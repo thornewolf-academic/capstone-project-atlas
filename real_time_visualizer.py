@@ -14,6 +14,7 @@ import logging
 
 class RealTimeVisualizer(Subscriber):
     def __init__(self, file_dict):
+        self.file_dict = file_dict
 
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
