@@ -24,7 +24,7 @@ class RealTimeVisualizer(Subscriber):
 
         intvl = 1000  # ms
         self._target_locations = None
-        self.point_cloud_file_name = self.file_dict["point_cloud_name"]
+        self.point_cloud_file_name = self.file_dict["real_time_point_cloud_name"]
         self.target_locations_file_name = self.file_dict[
             "sensor_package_locations_name"
         ]
@@ -69,10 +69,6 @@ class RealTimeVisualizer(Subscriber):
             self.beacons = np.load(
                 f"{self.target_locations_file_name}", allow_pickle=True
             )
-            self.logger.info(f"Successfully loaded {self.target_locations_file_name=}")
-
-            self.beacons = self.beacons[self.beacons[:, 0] == 1]
-            self._target_locations = self.beacons[:, 2:5]
             return self._target_locations
         except Exception as e:
             self.logger.error(
@@ -84,6 +80,9 @@ class RealTimeVisualizer(Subscriber):
         self.logger.info(f"Updating plot for frame {i}.")
         try:
             self.data = np.load(f"{self.point_cloud_file_name}", allow_pickle=True)
+            self.data = self.data[
+                0 : self.data.shape[0] : (1 + self.data.shape[0] // 10_000), :
+            ]
         except Exception as e:
             self.logger.error(
                 f"could not read file {self.point_cloud_file_name}\n\t{e=}"
@@ -112,7 +111,7 @@ class RealTimeVisualizer(Subscriber):
 
             except Exception as e:
                 self.logger.exception(e)
-                return
+                pass
 
             self.num_rows = self.data.shape[0]
             self.logger.info(f"Number of points is now {self.num_rows}.")
@@ -121,8 +120,10 @@ class RealTimeVisualizer(Subscriber):
         self.elapsed_time = "%.2f" % (self.current_time - self.initial_time)
         self.last_time = self.current_time
 
-        self.ax.set_xlim(self.minx, self.maxx)
-        self.ax.set_ylim(self.miny, self.maxy)
+        minhoriz = min(self.minx, self.miny)
+        maxhoriz = min(self.maxx, self.maxy)
+        self.ax.set_xlim(minhoriz, maxhoriz)
+        self.ax.set_ylim(minhoriz, maxhoriz)
         self.ax.set_zlim(self.minz, self.maxz)
 
         # static axes
@@ -153,6 +154,7 @@ class RealTimeVisualizer(Subscriber):
         colorassign = np.vectorize(lambda x: d[x])
 
         self.scat._offsets3d = (x, y, z)
+        self.ax.azim = self.ax.azim + 3 * (360 / 500)
         self.scat._facecolor3d = colorassign(pos % 16)
         self.scat._edgecolor3d = colorassign(pos % 16)
         numpoints = "Number of Points: " + str(self.num_rows)
@@ -168,6 +170,9 @@ class RealTimeVisualizer(Subscriber):
     def signal(self, signal: UpdateSignal, data=None):
         try:
             self.data = np.load(self.point_cloud_file_name, allow_pickle=True)
+            self.data = self.data[
+                0 : self.data.shape[0] : (1 + self.data.shape[0] // 500), :
+            ]
         except:
             return
 

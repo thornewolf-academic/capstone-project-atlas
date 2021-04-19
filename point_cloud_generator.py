@@ -14,6 +14,8 @@ from utilities import SYSTEM_STATES, Subscribable, Subscriber, UpdateSignal
 import logging
 from typing import Union, List
 
+import sys
+
 STEPS_PER_ROTATION = 3200
 LIDAR_UNCERT = 0.05
 
@@ -28,14 +30,16 @@ class PointCloudGenerator(Subscribable, Subscriber):
         self.logger = logging.getLogger("point_cloud_generator")
         self.logger.addHandler(ch)
 
-        self.point_cloud_file_name = config["point_cloud_name"]
+        self.real_time_point_cloud_file_name = config["real_time_point_cloud_name"]
+        self.final_point_cloud_file_name = config["final_point_cloud_name"]
         self.target_locations_file_name = config["sensor_package_locations_name"]
         self.target_measurements = defaultdict(
             lambda: defaultdict(lambda: defaultdict(lambda: None))
         )
-        self.scan_measurements = defaultdict(list)
         self.my_locations = defaultdict(tuple)
-        self.scan_locations = defaultdict(list)
+        self.total_locations = 0
+        self.scan_locations_list = []
+        self.scan_locations = np.zeros((1, 4))
         self.iteration = None
         self.last_save = time.time()
         self.finished = False
@@ -46,7 +50,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
         self.targets_set = set()
 
     def signal(self, signal: UpdateSignal, data=None):
-        self.logger.info(f"Signaled with new data.")
+        # self.logger.info(f"Signaled with new data.")
         if signal == UpdateSignal.NEW_DATA:
             self.handle_new_data(data)
         return super().signal(signal, data=data)
@@ -54,10 +58,11 @@ class PointCloudGenerator(Subscribable, Subscriber):
     def mark_finished(self):
         self.logger.info(f"Marking self as finished.")
         self.save_scan()
+        self.save_scan(final_scan=True)
         self.finished = True
 
     def handle_new_data(self, data: List[str]):
-        self.logger.info(f"New data received\n\t{data=}")
+        # self.logger.info(f"New data received\n\t{data=}")
 
         system_state = data[0]
 
@@ -73,12 +78,13 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
             # Insert measurement into raw measurements data structure
             measurement = tuple(data[2:])
-            self.scan_measurements[state_iteration].append(measurement)
 
             # Convert measurement to inertial location and store
             location = self.measurement_to_location(measurement)
-            location = np.append([[state_iteration]], location, axis=1)
-            self.scan_locations[state_iteration].append(location)
+            location = np.append([state_iteration], location, axis=0)
+
+            # self.logger.info(f"{self.scan_locations=}")
+            self.scan_locations_list.append(location)
 
             # Hardcoded rate-limit on save frequency for performance
             if time.time() - self.last_save > 2:
@@ -153,7 +159,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
                 - self._target_locations[self.iteration - 1][target_1]
             )
         else:
-            true_axis = np.reshape(unp.uarray([1, 0, 0], [0.0, 0.0, 0.0]), (3,))
+            true_axis = np.reshape([1, 0, 0], (3,))
 
         true_axis = np.reshape(true_axis, (3,))
 
@@ -182,12 +188,12 @@ class PointCloudGenerator(Subscribable, Subscriber):
 
         return self._target_locations
 
-    def save_scan(self):
+    def save_scan(self, final_scan=False):
         # TODO(thorne): The shape of the saved scan is likely (n,8) instead of (n,7) this is because there is an uncertainty measurement related with the iteration number. Fix this.
         # Save all scanned points
-        locs = []
-        for iteration in self.scan_locations.keys():
-            locs += self.scan_locations[iteration]
+        new_scan_locations = np.reshape(np.array(self.scan_locations_list), (-1, 4))
+        self.scan_locations = np.append(self.scan_locations, new_scan_locations, axis=0)
+        self.scan_locations_list = []
 
         target_locs = []
         for iteration in self.target_locations.keys():
@@ -199,17 +205,19 @@ class PointCloudGenerator(Subscribable, Subscriber):
                     ).tolist(),
                 )
                 target_locs += [data]
-
         target_locs = np.array(target_locs)
 
-        self.logger.info(f"Total locations {len(locs)}")
+        self.logger.info(f"Total locations {len(self.scan_locations)}")
+        if not final_scan:
+            np.save(self.real_time_point_cloud_file_name, self.scan_locations)
+            np.save(self.target_locations_file_name, target_locs)
+            return
 
-        locs = np.array(locs)
-        locs = np.squeeze(locs, axis=(1,))
-        locs = unp.nominal_values(locs)
-        stds = unp.std_devs(locs)
-        total_data = np.concatenate((locs, stds), axis=1)
-        np.save(self.point_cloud_file_name, total_data)
+        raw = unp.nominal_values(self.scan_locations)
+        stds = unp.std_devs(self.scan_locations)
+        total_data = np.concatenate((raw, stds), axis=1)
+        np.save(self.real_time_point_cloud_file_name, self.scan_locations)
+        np.save(self.final_point_cloud_file_name, total_data)
         np.save(self.target_locations_file_name, target_locs)
 
 
@@ -230,7 +238,6 @@ def rotation_matrix_from(A, B):
     ssm = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
 
     R = np.eye(3) + ssm + np.matmul(ssm, ssm) / (1 + c)
-    R = unp.matrix(R)
     return R
 
 
@@ -240,17 +247,18 @@ def measurement_to_xyz(measurement):
     except Exception as e:
         print("unpacking point failed")
         return np.array([0, 0, 0])
-    dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
-    theta_step = uncertainties.ufloat(theta_step, 0.05)
-    phi_step = uncertainties.ufloat(-phi_step, 0.05)
+    # dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
+    # theta_step = uncertainties.ufloat(theta_step, 0.05)
+    # phi_step = uncertainties.ufloat(-phi_step, 0.05)
+    phi_step = -phi_step
     return np.array(
         [
             dist
-            * umath.cos(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
-            * umath.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
+            * np.math.cos(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
+            * np.math.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
             dist
-            * umath.sin(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
-            * umath.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
-            dist * umath.sin(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
+            * np.math.sin(theta_step * 360 / STEPS_PER_ROTATION * np.pi / 180)
+            * np.math.cos(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
+            dist * np.math.sin(phi_step * 360 / STEPS_PER_ROTATION * np.pi / 180),
         ]
     )

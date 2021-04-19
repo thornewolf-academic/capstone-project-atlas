@@ -23,7 +23,7 @@ class DataFilterer:
         # self.data_in_path = data_in_path
         self.finished = 0
         self.file_dict = file_dict
-        self.data = np.load(self.file_dict["point_cloud_name"])
+        self.data = np.load(self.file_dict["final_point_cloud_name"])
         self.filt_point_cloud_path = file_dict["filt_point_cloud_name"]
         self.uncertainty_path = self.file_dict["filtered_point_cloud_uncertainty_name"]
 
@@ -67,13 +67,13 @@ class DataFilterer:
             elif 6 == data[loc, 0]:
                 dataset6[loc, :] = data[loc, 0:4]
             elif 7 == data[loc, 0]:
-                dataset7[loc, :] = data[loc, 0:3]
+                dataset7[loc, :] = data[loc, 0:4]
             elif 8 == data[loc, 0]:
-                dataset8[loc, :] = data[loc, 0:3]
+                dataset8[loc, :] = data[loc, 0:4]
             elif 9 == data[loc, 0]:
-                dataset9[loc, :] = data[loc, 0:3]
+                dataset9[loc, :] = data[loc, 0:4]
             else:
-                datasetmisc = data[loc, 0:3]
+                datasetmisc = data[loc, 0:4]
 
         for loc in range(1, int(locations) + 1):
             if loc == 1:

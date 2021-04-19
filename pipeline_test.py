@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import initialize
 
-RAW_DATA_PATH = "2_point_scan_4.5.TXT"
+RAW_DATA_PATH = "4_16_small_scoot_scan.TXT"
 POINT_CLOUD_FILE_NAME = RAW_DATA_PATH + ".npy"
 PACKAGE_LOCATIONS_FILE_NAME = "sensor_package_locations.npy"
 FILTERED_DATA_PATH = "filtered_point_cloud.npy"
@@ -55,12 +55,19 @@ def main():
 
     gen.mark_finished()
 
-    data_filterer = DataFilterer(configuration_dictionary)
+    # data_filterer = DataFilterer(configuration_dictionary)
 
-    data_filterer.begin()
+    # data_filterer.begin()
 
-    while not data_filterer.finished:
-        time.sleep(1)
+    # while not data_filterer.finished:
+    #     time.sleep(1)
+
+    np.savetxt(
+        "filtered_point_cloud/4_16_filtered_point_cloud.npy.xyz",
+        gen.scan_locations[:, 1:],
+        delimiter=" ",
+        fmt="%f",
+    )
 
     mesh_generator = MeshGenerator(configuration_dictionary)
     mesh_generator.begin()
@@ -68,8 +75,8 @@ def main():
     while not mesh_generator.finished:
         time.sleep(1)
 
-    point_cloud_visualizer = PointCloudVisualizer(configuration_dictionary)
-    point_cloud_visualizer.begin()
+    # point_cloud_visualizer = PointCloudVisualizer(configuration_dictionary)
+    # point_cloud_visualizer.begin()
 
     logger.info("Completed all ATLAS software :)")
 

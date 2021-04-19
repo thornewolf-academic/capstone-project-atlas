@@ -3,13 +3,14 @@ PATHS:
   POINT_CLOUD_LOCATION: 'point_cloud'
   FILTERED_POINT_CLOUD_LOCATION: 'filtered_point_cloud'
   MESH_LOCATION: 'mesh'
-  SCRIPT_LOCATION: 'script'
+  SCRIPT_LOCATION: 'scripts'
 
 # The desired file names for output files, avoid using duplicate names.
 NAMES:
-  POINT_CLOUD_NAME: 'scan_test.npy'
-  FILTERED_POINT_CLOUD_NAME: 'filtered_point_cloud.npy.xyz'
-  MESH_NAME: 'filtered_data_mesh.obj'
+  REAL_TIME_POINT_CLOUD_NAME: '4_16_point_cloud_real_time.npy'
+  FINAL_POINT_CLOUD_NAME: '4_16_point_cloud_with_uncertainties.npy'
+  FILTERED_POINT_CLOUD_NAME: '4_16_filtered_point_cloud.npy.xyz'
+  MESH_NAME: '4_16_filtered_data_mesh.obj'
   SCRIPT_NAME: 'script1.mlx'
   SENSOR_PACKAGE_LOCATIONS_NAME: 'sensor_package_locations.npy'
   UNCERTAINTY_NAME: 'filtered_point_cloud_uncertainty.npy'

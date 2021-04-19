@@ -30,8 +30,11 @@ def set_files(dir_dict, cfg):
         "script_name": os.path.join(
             dir_dict["script_dir"], cfg["NAMES"]["SCRIPT_NAME"]
         ),
-        "point_cloud_name": os.path.join(
-            dir_dict["point_cloud_dir"], cfg["NAMES"]["POINT_CLOUD_NAME"]
+        "real_time_point_cloud_name": os.path.join(
+            dir_dict["point_cloud_dir"], cfg["NAMES"]["REAL_TIME_POINT_CLOUD_NAME"]
+        ),
+        "final_point_cloud_name": os.path.join(
+            dir_dict["point_cloud_dir"], cfg["NAMES"]["FINAL_POINT_CLOUD_NAME"]
         ),
         "sensor_package_locations_name": os.path.join(
             dir_dict["point_cloud_dir"], cfg["NAMES"]["SENSOR_PACKAGE_LOCATIONS_NAME"]
