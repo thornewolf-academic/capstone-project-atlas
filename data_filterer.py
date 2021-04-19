@@ -23,6 +23,7 @@ class DataFilterer:
         # self.data_in_path = data_in_path
         self.finished = 0
         self.file_dict = file_dict
+
         self.data = np.load(self.file_dict["final_point_cloud_name"])
         self.filt_point_cloud_path = file_dict["filt_point_cloud_name"]
         self.uncertainty_path = self.file_dict["filtered_point_cloud_uncertainty_name"]
@@ -78,6 +79,7 @@ class DataFilterer:
         for loc in range(1, int(locations) + 1):
             if loc == 1:
                 dataset1 = dataset1[~np.all(dataset1 == 0, axis=1)]
+                dataset1_new = dataset1
             elif loc == 2:
                 dataset2 = dataset2[~np.all(dataset2 == 0, axis=1)]
                 dataset2_fixed = matcher.surface_match(dataset1, dataset2)
@@ -144,18 +146,21 @@ class DataFilterer:
     def uncertainty(self):
         rows1 = []
         rows2 = []
+        rows3 = []
         for row1 in self.data:
             rows1.append(row1)
-        Z = [float(row1[3]) for row1 in rows1]
-        dx = [float(row1[4]) for row1 in rows1]
-        dy = [float(row1[5]) for row1 in rows1]
-        dz = [float(row1[5]) for row1 in rows1]
+        dx = [float(row1[5]) for row1 in rows1]
+        dy = [float(row1[6]) for row1 in rows1]
+        dz = [float(row1[7]) for row1 in rows1]
         for row2 in self.filt_data:
             rows2.append(row2)
         Z_o = [float(row2[2]) for row2 in rows2]
         Z_o = np.asarray(Z_o)
+        for row3 in self.fixed_data:
+            rows3.append(row3)
+        Z_fix = [float(row3[3]) for row3 in rows3]
 
-        u_z = np.abs(self.fixed_data[:, 3] - Z) + dz
+        u_z = np.abs(Z_fix - Z_o) + dz
         delt = np.concatenate(([dx], [dy], [u_z]))
         delt = np.transpose(delt)
         print(delt)
