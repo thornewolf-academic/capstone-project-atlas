@@ -10,14 +10,14 @@ def surface_match(dataset1, dataset2):
     dataset2_rotated = np.zeros([len(dataset2),3])
     qhat = np.zeros([1,3])
     print('FINDING OVERLAP...')
-    for u in range(0,len(dataset2)):
-        for v in range(int(0*len(dataset1)),len(dataset1)):
+    for u in range(int(0.5*len(dataset2)),int(len(dataset2))):
+        for v in range(int(0.5**len(dataset1)),int(len(dataset1))):
             x_1 = dataset1[v,1]
             y_1 = dataset1[v,2]
             x_2 = dataset2[u,1]
             y_2 = dataset2[u,2]
             dist = math.sqrt(((x_2-x_1)**2 + ((y_2-y_1)**2)))
-            if dist <= 0.4:
+            if dist <= 0.6:
                 overlap_plane1val = dataset2[u,:]
                 overlap_plane2val = dataset1[v,:]
                 overlap_plane1.append(overlap_plane1val)
