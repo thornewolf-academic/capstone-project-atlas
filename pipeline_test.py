@@ -21,7 +21,10 @@ SCRIPT_PATH = "./scripts/script1.mlx"
 
 PLOT = True
 
-logging.basicConfig(filename="runs.log", level=logging.INFO)
+logging.basicConfig(
+    filename="runs.log",
+    level=logging.INFO,
+)
 
 
 def numpy_to_xyz(numpy_path):
@@ -36,6 +39,8 @@ def numpy_to_xyz(numpy_path):
 
 def main():
     logger = logging.Logger("pipeline_test", level=logging.INFO)
+    logger.addHandler(logging.FileHandler("runs.log", mode="w"))
+    logger.addHandler(logging.StreamHandler())
 
     configuration_dictionary = initialize.initialize()
 
@@ -72,8 +77,8 @@ def main():
     mesh_generator = MeshGenerator(configuration_dictionary)
     mesh_generator.begin()
 
-    while not mesh_generator.finished:
-        time.sleep(1)
+    # while not mesh_generator.finished:
+    #     time.sleep(1)
 
     # point_cloud_visualizer = PointCloudVisualizer(configuration_dictionary)
     # point_cloud_visualizer.begin()

@@ -100,7 +100,7 @@ class BluetoothParser:
 
         if buffer_as_string[-1:] == "\n":
             message = buffer_as_string
-            print(message)
+            # print(message)
             self.data_buffer = b""
 
         if message == "":

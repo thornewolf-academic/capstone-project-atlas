@@ -155,8 +155,8 @@ class PointCloudGenerator(Subscribable, Subscriber):
             and target_2 in self._target_locations[self.iteration - 1]
         ):
             true_axis = (
-                self._target_locations[self.iteration - 1][target_2]
-                - self._target_locations[self.iteration - 1][target_1]
+                self._target_locations[1][target_2]
+                - self._target_locations[1][target_1]
             )
         else:
             true_axis = np.reshape([1, 0, 0], (3,))
@@ -166,25 +166,45 @@ class PointCloudGenerator(Subscribable, Subscriber):
         R = rotation_matrix_from(measured_axis, true_axis)
         self._rotation_matrices[self.iteration] = R
 
-        sensor_relative_location_to_origin = -relative_locations[target_1].copy()
-        self.my_locations[self.iteration] = sensor_relative_location_to_origin
+        sensor_relative_location_to_origin = -np.matmul(
+            R, relative_locations[target_1].copy()
+        )
 
         inertial_locations = {
             tid: np.asarray(np.matmul(R, measurement.copy()))
             for tid, measurement in relative_locations.items()
         }
 
-        inertial_offset = np.zeros((3,))
-        for tid in inertial_locations:
-            if tid in self._target_locations[self.iteration - 1]:
+        inertial_offset = None
+        for tid in sorted(inertial_locations):
+            if tid in sorted(self._target_locations[1]):
                 inertial_offset = (
-                    inertial_locations[tid]
-                    - self._target_locations[self.iteration - 1][tid]
+                    inertial_locations[tid] - self._target_locations[1][tid]
                 )
                 break
+        if inertial_offset is None:
+            inertial_offset = inertial_locations[target_1]
+
+        self.logger.info(
+            f"Need inertial offset of {inertial_offset} to correct {tid} from\n{inertial_locations[tid]} -> {inertial_locations[tid]-inertial_offset}"
+        )
+
+        self.my_locations[self.iteration] = (
+            sensor_relative_location_to_origin - inertial_offset
+        )
+        self.logger.info(
+            f"I believe the sensor package is at {self.my_locations[self.iteration]=}"
+        )
 
         for tid, location in inertial_locations.items():
             self._target_locations[self.iteration][tid] = location - inertial_offset
+
+        try:
+            self.logger.info(f"{self._target_locations[self.iteration][1]=}")
+            self.logger.info(f"{self._target_locations[self.iteration][2]=}")
+            self.logger.info(f"{self._target_locations[self.iteration][3]=}")
+        except:
+            pass
 
         return self._target_locations
 
@@ -250,6 +270,7 @@ def measurement_to_xyz(measurement):
     # dist = uncertainties.ufloat(dist, LIDAR_UNCERT)
     # theta_step = uncertainties.ufloat(theta_step, 0.05)
     # phi_step = uncertainties.ufloat(-phi_step, 0.05)
+    theta_step = theta_step
     phi_step = -phi_step
     return np.array(
         [
