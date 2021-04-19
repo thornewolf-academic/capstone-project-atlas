@@ -11,7 +11,6 @@ class SensorWatcher(Subscribable):
         super(SensorWatcher, self).__init__()
         self.serial = get_arduino_serial()
         self.parser = BluetoothParser()
-        self.finished = False
         self.thread = None
 
     def read_until_complete(self):

@@ -5,7 +5,7 @@ from point_cloud_generator import PointCloudGenerator
 import matplotlib.pyplot as plt
 import numpy as np
 
-DATA_FILE = "testing_data_files/SCAN_FAKE.TXT"
+DATA_FILE = r"C:\Users\thorn\Google Drive\School\Senior\Semester 2\Detail\Project-Atlas\testing_data_files\3_22\SCAN2_3_22_ThreeTotalPointsCleaned.TXT"
 
 
 PLOT = True
@@ -13,7 +13,7 @@ PLOT = True
 
 def main():
     parser = BluetoothParser()
-    gen = PointCloudGenerator(DATA_FILE + "_output")
+    gen = PointCloudGenerator(DATA_FILE + "_output", DATA_FILE + "_target_locations")
     with open(DATA_FILE, "rb") as f:
         data = f.read()
 
@@ -27,7 +27,7 @@ def main():
         point_cloud = np.load(DATA_FILE + "_output.npy")
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
-        ax.scatter(point_cloud[:, 0], point_cloud[:, 1], point_cloud[:, 2])
+        ax.scatter(point_cloud[:, 1], point_cloud[:, 2], point_cloud[:, 3])
         plt.show()
 
 

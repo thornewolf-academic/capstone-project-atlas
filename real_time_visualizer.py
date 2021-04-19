@@ -9,14 +9,29 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 import time
 import threading
 from multiprocessing import Process
+import logging
 
 
 class RealTimeVisualizer(Subscriber):
-    def __init__(self, point_cloud_file_name):
+    def __init__(self, file_dict):
+        self.file_dict = file_dict
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        self.logger = logging.getLogger("real_time_visualizer")
+        self.logger.addHandler(ch)
+
         intvl = 1000  # ms
-        self.point_cloud_file_name = point_cloud_file_name
-        if '.npy' not in self.point_cloud_file_name:
-            self.point_cloud_file_name = f'{self.point_cloud_file_name}.npy'
+        self._target_locations = None
+        self.point_cloud_file_name = self.file_dict["real_time_point_cloud_name"]
+        self.target_locations_file_name = self.file_dict[
+            "sensor_package_locations_name"
+        ]
+
+        if ".npy" not in self.point_cloud_file_name:
+            self.point_cloud_file_name = f"{self.point_cloud_file_name}.npy"
+
         self.data = np.array([[], [], []])
         self.minx = 0
         self.miny = 0
@@ -37,47 +52,78 @@ class RealTimeVisualizer(Subscriber):
         p = Process(target=self.myplot, args=(intvl,))
         p.start()
 
+        self.logger.info(f"Initialized.")
+
     def myplot(self, intvl):
         self.ani = animation.FuncAnimation(
             self.fig, self.update_plot, blit=False, interval=intvl, repeat=False
         )
         plt.show()
 
+    @property
+    def target_locations(self):
+        if self._target_locations is not None:
+            self.logger.info(f"Using cached self._target_locations value")
+            return self._target_locations
+        try:
+            self.beacons = np.load(
+                f"{self.target_locations_file_name}", allow_pickle=True
+            )
+            return self._target_locations
+        except Exception as e:
+            self.logger.error(
+                f"Failed to load beacons file {self.target_locations_file_name=}.\n\t{e=}"
+            )
+            return np.array([[], [], []]).T
+
     def update_plot(self, i):
+        self.logger.info(f"Updating plot for frame {i}.")
         try:
             self.data = np.load(f"{self.point_cloud_file_name}", allow_pickle=True)
+            self.data = self.data[
+                0 : self.data.shape[0] : (1 + self.data.shape[0] // 10_000), :
+            ]
         except Exception as e:
-            print("could not read file")
-            print(e)
+            self.logger.error(
+                f"could not read file {self.point_cloud_file_name}\n\t{e=}"
+            )
             return
+
+        beacons = np.concatenate(
+            (np.zeros((self.target_locations.shape[0], 1)), self.target_locations),
+            axis=1,
+        )
+
+        data = np.concatenate((self.data[:, 0:4], beacons), axis=0)
+        pos = data[:, 0]
+        x = data[:, 1]
+        y = data[:, 2]
+        z = data[:, 3]
 
         if self.data.shape[0] != self.num_rows:
             try:
-                x = self.data[:, 0]
-                y = self.data[:, 1]
-                z = self.data[:, 2]
                 self.minx = max(min(self.minx, min(x[self.num_rows :])), -2000)
                 self.miny = max(min(self.miny, min(y[self.num_rows :])), -2000)
                 self.minz = max(min(self.minz, min(z[self.num_rows :])), -2000)
                 self.maxx = min(max(self.maxx, max(x[self.num_rows :])), 2000)
                 self.maxy = min(max(self.maxy, max(y[self.num_rows :])), 2000)
                 self.maxz = min(max(self.maxz, max(z[self.num_rows :])), 2000)
+
             except Exception as e:
-                print(e)
-                return
+                self.logger.exception(e)
+                pass
 
             self.num_rows = self.data.shape[0]
-
-        x = self.data[:, 0]
-        y = self.data[:, 1]
-        z = self.data[:, 2]
+            self.logger.info(f"Number of points is now {self.num_rows}.")
 
         self.current_time = time.time()
         self.elapsed_time = "%.2f" % (self.current_time - self.initial_time)
         self.last_time = self.current_time
 
-        self.ax.set_xlim(self.minx, self.maxx)
-        self.ax.set_ylim(self.miny, self.maxy)
+        minhoriz = min(self.minx, self.miny)
+        maxhoriz = min(self.maxx, self.maxy)
+        self.ax.set_xlim(minhoriz, maxhoriz)
+        self.ax.set_ylim(minhoriz, maxhoriz)
         self.ax.set_zlim(self.minz, self.maxz)
 
         # static axes
@@ -85,7 +131,32 @@ class RealTimeVisualizer(Subscriber):
         # ax.set_ylim(0, 10)
         # ax.set_zlim(0, 10)
 
+        d = {
+            0: "k",  # 0 indicates a flag
+            1: "b",
+            2: "g",
+            3: "r",
+            4: "c",
+            5: "m",
+            6: "y",
+            7: "xkcd:burnt orange",
+            8: "xkcd:purple",
+            9: "xkcd:pink",
+            10: "xkcd:magenta",
+            11: "xkcd:tan",
+            12: "xkcd:lavender",
+            13: "xkcd:olive",
+            14: "xkcd:chartreuse",
+            15: "xkcd:goldenrod",
+            16: "xkcd:wine",
+        }
+
+        colorassign = np.vectorize(lambda x: d[x])
+
         self.scat._offsets3d = (x, y, z)
+        self.ax.azim = self.ax.azim + 3 * (360 / 500)
+        self.scat._facecolor3d = colorassign(pos % 16)
+        self.scat._edgecolor3d = colorassign(pos % 16)
         numpoints = "Number of Points: " + str(self.num_rows)
         time_elapsed = "Time Elapsed: " + str(self.elapsed_time) + "s  "
         iteration = " Iteration: " + str(i)
@@ -99,6 +170,9 @@ class RealTimeVisualizer(Subscriber):
     def signal(self, signal: UpdateSignal, data=None):
         try:
             self.data = np.load(self.point_cloud_file_name, allow_pickle=True)
+            self.data = self.data[
+                0 : self.data.shape[0] : (1 + self.data.shape[0] // 500), :
+            ]
         except:
             return
 
@@ -123,4 +197,4 @@ class RealTimeVisualizer(Subscriber):
 
 
 if __name__ == "__main__":
-    RealTimeVisualizer("sample_point_data.npy")
+    RealTimeVisualizer("sim_loc_data", "target_locations")

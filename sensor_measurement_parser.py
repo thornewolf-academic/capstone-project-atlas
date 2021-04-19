@@ -41,7 +41,7 @@ class BluetoothParser:
             return True
         # Localization data validation
         if len(message_components) == 4 and all(
-            comp.isnumeric() for comp in message_components
+            comp.replace("-", "").isnumeric() for comp in message_components
         ):
             return True
         # Scan data validation
@@ -67,7 +67,8 @@ class BluetoothParser:
         if message_components[0] in [SYSTEM_STATES.LOCALIZE, SYSTEM_STATES.SCAN]:
             self.state = message_components[0]
             self.state_iteration = int(message_components[1])
-            print(f"Got a {message_components[0]} command")
+            if message_components[0] == SYSTEM_STATES.LOCALIZE:
+                print(f"Got a {message_components[0]} command, {message_components[1]}")
             return
         if message_components[0] in [SYSTEM_STATES.RESET]:
             self.reset_state()

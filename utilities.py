@@ -35,7 +35,7 @@ class SYSTEM_STATES:
     LOCALIZE = "LOCALIZE"
     SCAN = "SCAN"
     RESET = "RESET"
-    FINISHED = "FINISHED"
+    FINISHED = "END SCAN"
 
 
 def numpy_to_xyz(numpy_path):
