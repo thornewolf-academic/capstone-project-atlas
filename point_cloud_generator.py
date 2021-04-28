@@ -189,9 +189,7 @@ class PointCloudGenerator(Subscribable, Subscriber):
             f"Need inertial offset of {inertial_offset} to correct {tid} from\n{inertial_locations[tid]} -> {inertial_locations[tid]-inertial_offset}"
         )
 
-        self.my_locations[self.iteration] = (
-            sensor_relative_location_to_origin - inertial_offset
-        )
+        self.my_locations[self.iteration] = sensor_relative_location_to_origin
         self.logger.info(
             f"I believe the sensor package is at {self.my_locations[self.iteration]=}"
         )
