@@ -1,2 +1,2 @@
-# Project-Atlas
-A fully fledged terrain mapping solution.
+# Project Atlas
+ERAU class of 2021 capstone project, "ATLAS".
